@@ -29,7 +29,7 @@ public class Usuario {
  
     public Usuario(String nome, String email, String senha, LocalDate dataRegistro) {
         this.nome = nome;
-this.email = email;
+        this.email = email;
         this.senha = senha;
         this.dataRegistro = dataRegistro;
     }

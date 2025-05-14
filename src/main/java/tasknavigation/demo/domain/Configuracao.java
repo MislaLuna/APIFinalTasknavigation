@@ -7,25 +7,27 @@ public class Configuracao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id_configuracao") // Mapeia a coluna id_configuracao
+    private Long idConfiguracao;
 
-
+    @Column(name = "notificacoes") // Mapeia a coluna notificacoes
     private Boolean notificacoes;
+
+    @Column(name = "foto_perfil") // Mapeia a coluna foto_perfil
     private String fotoPerfil;
 
-    @OneToOne
-    @JoinColumn(name = "usuario_id")
+    @OneToOne(fetch = FetchType.EAGER) 
+    @JoinColumn(name = "usuario_id") // Mapeia a coluna usuario_id
     private Usuario usuario;
 
     // Getters e Setters
-    public Long getId() {
-        return id;
+    public Long getIdConfiguracao() {
+        return idConfiguracao;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdConfiguracao(Long idConfiguracao) {
+        this.idConfiguracao = idConfiguracao;
     }
-
 
     public Boolean getNotificacoes() {
         return notificacoes;
