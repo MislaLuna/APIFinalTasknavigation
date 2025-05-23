@@ -6,20 +6,64 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
+@Table(name = "Projeto")
 public class Projeto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    @Column(name = "id_projeto")
+    private Integer idProjeto;
 
-    public String nome;
-    public String descricao;
-    public LocalDate prazo;
+    private String nome;
+    private String descricao;
+    private LocalDate prazo;
 
     @ManyToOne
     @JsonIgnoreProperties("projeto")
-    @JoinColumn(name = "usuario_id")
-    public Usuario usuario;
+    @JoinColumn(name = "id_usuario")
+    private Usuario usuario;
 
-    // Getters e Setters
+    public Projeto() {}
+
+    // Getters e setters
+
+    public Integer getIdProjeto() {
+        return idProjeto;
+    }
+
+    public void setIdProjeto(Integer idProjeto) {
+        this.idProjeto = idProjeto;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public LocalDate getPrazo() {
+        return prazo;
+    }
+
+    public void setPrazo(LocalDate prazo) {
+        this.prazo = prazo;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 }

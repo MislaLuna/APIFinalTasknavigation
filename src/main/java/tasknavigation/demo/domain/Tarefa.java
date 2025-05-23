@@ -4,32 +4,42 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "Tarefa")
 public class Tarefa {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id_tarefa")
+    private Integer idTarefa;
 
     private String titulo;
     private String descricao;
     private LocalDate prazo;
 
+    @Column(nullable = false)
+    private String status; // "Pendente" ou "Concluída"
+
+    @Column(nullable = false)
+    private String prioridade; // "Alta", "Média", "Baixa"
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id")
+    @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
     @ManyToOne
-    @JoinColumn(name = "projeto_id")
+    @JoinColumn(name = "id_projeto")
     private Projeto projeto;
 
-    // Getters e Setters
-    public Long getId() {
-        return id;
+    public Tarefa() {}
+
+    // Getters e setters
+
+    public Integer getIdTarefa() {
+        return idTarefa;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdTarefa(Integer idTarefa) {
+        this.idTarefa = idTarefa;
     }
 
     public String getTitulo() {
@@ -56,6 +66,21 @@ public class Tarefa {
         this.prazo = prazo;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getPrioridade() {
+        return prioridade;
+    }
+
+    public void setPrioridade(String prioridade) {
+        this.prioridade = prioridade;
+    }
 
     public Usuario getUsuario() {
         return usuario;
