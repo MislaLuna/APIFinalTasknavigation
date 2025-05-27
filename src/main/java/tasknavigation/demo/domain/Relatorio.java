@@ -8,14 +8,18 @@ public class Relatorio {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_relatorio")
     private Long id;
 
-    public String conteudo;
-    public LocalDate dataCriacao;
+    @Column(columnDefinition = "TEXT")
+    private String conteudo;
+
+    @Column(name = "data_criacao")
+    private LocalDate dataCriacao;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id")
+    @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
-    // Getters e Setters
+    // Getters e Setters aqui
 }
