@@ -12,7 +12,7 @@ public class Projeto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_projeto")
-    private Integer idProjeto;
+    private Long idProjeto;  // ALTERADO para Long
 
     private String nome;
     private String descricao;
@@ -27,11 +27,11 @@ public class Projeto {
 
     // Getters e setters
 
-    public Integer getIdProjeto() {
+    public Long getIdProjeto() {
         return idProjeto;
     }
 
-    public void setIdProjeto(Integer idProjeto) {
+    public void setIdProjeto(Long idProjeto) {
         this.idProjeto = idProjeto;
     }
 

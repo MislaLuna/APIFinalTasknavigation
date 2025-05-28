@@ -25,6 +25,7 @@ public class Tarefa {
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
+    
 
     @ManyToOne
     @JoinColumn(name = "id_projeto")

@@ -14,10 +14,15 @@ public class Documento {
     @Column(name = "id_documento")
     private Integer idDocumento;
 
+    @Column(name = "nomeArquivo")
     private String nomeArquivo;
-    private String caminhoArquivo;
-    private LocalDate dataUpload;
 
+    @Column(name = "caminhoArquivo")
+    private String caminhoArquivo;
+    
+    @Column(name = "dataUpload")
+    private LocalDate dataUpload;
+    
     @ManyToOne
     @JoinColumn(name = "id_projeto")
     @JsonIgnoreProperties("documentos")

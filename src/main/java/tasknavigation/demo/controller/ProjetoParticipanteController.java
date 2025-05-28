@@ -20,19 +20,15 @@ public class ProjetoParticipanteController {
     }
 
     @GetMapping("/{idProjeto}/{idUsuario}")
-    public Optional<ProjetoParticipante> buscarPorId(@PathVariable Integer idProjeto, @PathVariable Integer idUsuario) {
-        ProjetoParticipanteId id = new ProjetoParticipanteId(idProjeto, idUsuario);
-        return service.buscarPorId(id);
-    }
+public Optional<ProjetoParticipante> buscarPorId(@PathVariable Long idProjeto, @PathVariable Long idUsuario) {
+    ProjetoParticipanteId id = new ProjetoParticipanteId(idProjeto, idUsuario);
+    return service.buscarPorId(id);
+}
 
-    @PostMapping
-    public ProjetoParticipante salvar(@RequestBody ProjetoParticipante participante) {
-        return service.salvar(participante);
-    }
+@DeleteMapping("/{idProjeto}/{idUsuario}")
+public void deletar(@PathVariable Long idProjeto, @PathVariable Long idUsuario) {
+    ProjetoParticipanteId id = new ProjetoParticipanteId(idProjeto, idUsuario);
+    service.deletarPorId(id);
+}
 
-    @DeleteMapping("/{idProjeto}/{idUsuario}")
-    public void deletar(@PathVariable Integer idProjeto, @PathVariable Integer idUsuario) {
-        ProjetoParticipanteId id = new ProjetoParticipanteId(idProjeto, idUsuario);
-        service.deletarPorId(id);
-    }
 }

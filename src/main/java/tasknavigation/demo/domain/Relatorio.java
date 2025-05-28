@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "Relatorio")
 public class Relatorio {
 
     @Id
@@ -14,12 +15,13 @@ public class Relatorio {
     @Column(columnDefinition = "TEXT")
     private String conteudo;
 
-    @Column(name = "data_criacao")
+    @Column(name = "dataCriacao")
     private LocalDate dataCriacao;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
+
 
     // Getters e Setters aqui
 }

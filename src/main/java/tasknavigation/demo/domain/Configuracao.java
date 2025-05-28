@@ -3,30 +3,43 @@ package tasknavigation.demo.domain;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "Configuracao")
 public class Configuracao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_configuracao") // Mapeia a coluna id_configuracao
+    @Column(name = "id_configuracao")
     private Long idConfiguracao;
 
-    @Column(name = "notificacoes") // Mapeia a coluna notificacoes
+    @Column(name = "tema")
+    private String tema;
+
+    @Column(name = "notificacoes")
     private Boolean notificacoes;
 
-    @Column(name = "foto_perfil") // Mapeia a coluna foto_perfil
+    @Column(name = "foto_perfil")
     private String fotoPerfil;
 
-    @OneToOne(fetch = FetchType.EAGER) 
-    @JoinColumn(name = "usuario_id") // Mapeia a coluna usuario_id
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_usuario", unique = true, nullable = false)  // Aqui o nome correto da FK
     private Usuario usuario;
 
     // Getters e Setters
+
     public Long getIdConfiguracao() {
         return idConfiguracao;
     }
 
     public void setIdConfiguracao(Long idConfiguracao) {
         this.idConfiguracao = idConfiguracao;
+    }
+
+    public String getTema() {
+        return tema;
+    }
+
+    public void setTema(String tema) {
+        this.tema = tema;
     }
 
     public Boolean getNotificacoes() {

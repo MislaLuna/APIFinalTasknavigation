@@ -1,37 +1,40 @@
 package tasknavigation.demo.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+@Embeddable
 public class ProjetoParticipanteId implements Serializable {
 
     @Column(name = "id_projeto")
-    private Integer idProjeto;
+    private Long idProjeto;
 
     @Column(name = "id_usuario")
-    private Integer idUsuario;
+    private Long idUsuario;
 
-    public ProjetoParticipanteId() {}
+    public ProjetoParticipanteId() {
+    }
 
-    public ProjetoParticipanteId(Integer idProjeto, Integer idUsuario) {
+    public ProjetoParticipanteId(Long idProjeto, Long idUsuario) {
         this.idProjeto = idProjeto;
         this.idUsuario = idUsuario;
     }
 
-    public Integer getIdProjeto() {
+    public Long getIdProjeto() {
         return idProjeto;
     }
 
-    public void setIdProjeto(Integer idProjeto) {
+    public void setIdProjeto(Long idProjeto) {
         this.idProjeto = idProjeto;
     }
 
-    public Integer getIdUsuario() {
+    public Long getIdUsuario() {
         return idUsuario;
     }
 
-    public void setIdUsuario(Integer idUsuario) {
+    public void setIdUsuario(Long idUsuario) {
         this.idUsuario = idUsuario;
     }
 
@@ -40,11 +43,12 @@ public class ProjetoParticipanteId implements Serializable {
         if (this == o) return true;
         if (!(o instanceof ProjetoParticipanteId)) return false;
         ProjetoParticipanteId that = (ProjetoParticipanteId) o;
-        return Objects.equals(idProjeto, that.idProjeto) && Objects.equals(idUsuario, that.idUsuario);
+        return Objects.equals(getIdProjeto(), that.getIdProjeto()) &&
+               Objects.equals(getIdUsuario(), that.getIdUsuario());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idProjeto, idUsuario);
+        return Objects.hash(getIdProjeto(), getIdUsuario());
     }
 }
