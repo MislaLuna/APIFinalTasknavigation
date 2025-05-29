@@ -21,7 +21,7 @@ public class Configuracao {
     private String fotoPerfil;
 
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_usuario", unique = true, nullable = false)  // Aqui o nome correto da FK
+    @JoinColumn(name = "id_usuario", unique = true, nullable = false)  // FK - id_usuario
     private Usuario usuario;
 
     // Getters e Setters

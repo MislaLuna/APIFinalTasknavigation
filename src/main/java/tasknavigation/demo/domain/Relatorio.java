@@ -10,7 +10,7 @@ public class Relatorio {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_relatorio")
-    private Long id;
+    private Long idRelatorio;
 
     @Column(columnDefinition = "TEXT")
     private String conteudo;
@@ -22,6 +22,37 @@ public class Relatorio {
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
 
+    // Getters e Setters
 
-    // Getters e Setters aqui
+    public Long getIdRelatorio() {
+        return idRelatorio;
+    }
+
+    public void setIdRelatorio(Long idRelatorio) {
+        this.idRelatorio = idRelatorio;
+    }
+
+    public String getConteudo() {
+        return conteudo;
+    }
+
+    public void setConteudo(String conteudo) {
+        this.conteudo = conteudo;
+    }
+
+    public LocalDate getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public void setDataCriacao(LocalDate dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 }

@@ -12,7 +12,7 @@ public class Projeto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_projeto")
-    private Long idProjeto;  // ALTERADO para Long
+    private Long idProjeto;  // ALTERADO para Long ( pq tava dando erro com integer )
 
     private String nome;
     private String descricao;
