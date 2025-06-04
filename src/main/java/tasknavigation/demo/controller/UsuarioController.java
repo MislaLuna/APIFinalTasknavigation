@@ -2,6 +2,7 @@ package tasknavigation.demo.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,6 @@ import tasknavigation.demo.service.UsuarioService;
 
 @RestController
 @RequestMapping("/usuarios")
-@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     @Autowired
@@ -26,7 +26,7 @@ public class UsuarioController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // ✅ Endpoint para listar todos os usuários
+    // Lista todos os usuários com verificação
     @GetMapping
     public ResponseEntity<?> listarUsuarios() {
         try {
@@ -34,7 +34,7 @@ public class UsuarioController {
             if (usuarios.isEmpty()) {
                 return ResponseEntity.ok("Nenhum usuário encontrado.");
             }
-            return ResponseEntity.ok(usuarios);
+            return ResponseEntity.ok(usuarios); 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -42,30 +42,53 @@ public class UsuarioController {
         }
     }
 
-    // ✅ Endpoint para criar novo usuário
-    @PostMapping
-    public ResponseEntity<Usuario> criarUsuario(@RequestBody Usuario usuario) {
-        try {
-            Usuario novoUsuario = usuarioRepository.save(usuario);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    // ✅ Endpoint de login
+    // Cria um novo usuário
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Usuario loginData) {
-        Optional<Usuario> usuario = usuarioRepository.findByEmailAndSenha(
-            loginData.getEmail(), loginData.getSenha()
-        );
-
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String senha = credentials.get("senha");
+    
+        Optional<Usuario> usuario = usuarioRepository.findByEmailAndSenha(email, senha);
+    
         if (usuario.isPresent()) {
             return ResponseEntity.ok(usuario.get());
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                 .body("Email ou senha inválidos.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email ou senha incorretos.");
+        }
+    }
+
+    // Busca um usuário pelo ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Usuario> buscarUsuario(@PathVariable Long id) {
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
+        return usuario.map(ResponseEntity::ok)
+                      .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // Atualiza um usuário existente pelo ID
+    @PutMapping("/{id}")
+    public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
+        return usuarioRepository.findById(id).map(usuario -> {
+            usuario.setNome(usuarioAtualizado.getNome());
+            usuario.setEmail(usuarioAtualizado.getEmail());
+            usuario.setSenha(usuarioAtualizado.getSenha());
+            Usuario atualizado = usuarioRepository.save(usuario);
+            return ResponseEntity.ok(atualizado);
+        }).orElseGet(() -> {
+            usuarioAtualizado.setId(id);
+            Usuario novoUsuario = usuarioRepository.save(usuarioAtualizado);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+        });
+    }
+
+    // Deleta um usuário pelo ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
+        if (usuarioRepository.existsById(id)) {
+            usuarioRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 }
