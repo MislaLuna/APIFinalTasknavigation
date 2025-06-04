@@ -14,6 +14,7 @@ import tasknavigation.demo.service.UsuarioService;
 
 @RestController
 @RequestMapping("/usuarios")
+@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     @Autowired
@@ -25,7 +26,7 @@ public class UsuarioController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // Lista todos os usuários com verificação
+    // ✅ Endpoint para listar todos os usuários
     @GetMapping
     public ResponseEntity<?> listarUsuarios() {
         try {
@@ -41,7 +42,7 @@ public class UsuarioController {
         }
     }
 
-    // Cria um novo usuário
+    // ✅ Endpoint para criar novo usuário
     @PostMapping
     public ResponseEntity<Usuario> criarUsuario(@RequestBody Usuario usuario) {
         try {
@@ -53,38 +54,18 @@ public class UsuarioController {
         }
     }
 
-    // Busca um usuário pelo ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarUsuario(@PathVariable Long id) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-        return usuario.map(ResponseEntity::ok)
-                      .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+    // ✅ Endpoint de login
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Usuario loginData) {
+        Optional<Usuario> usuario = usuarioRepository.findByEmailAndSenha(
+            loginData.getEmail(), loginData.getSenha()
+        );
 
-    // Atualiza um usuário existente pelo ID
-    @PutMapping("/{id}")
-    public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
-        return usuarioRepository.findById(id).map(usuario -> {
-            usuario.setNome(usuarioAtualizado.getNome());
-            usuario.setEmail(usuarioAtualizado.getEmail());
-            usuario.setSenha(usuarioAtualizado.getSenha());
-            Usuario atualizado = usuarioRepository.save(usuario);
-            return ResponseEntity.ok(atualizado);
-        }).orElseGet(() -> {
-            usuarioAtualizado.setId(id);
-            Usuario novoUsuario = usuarioRepository.save(usuarioAtualizado);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
-        });
-    }
-
-    // Deleta um usuário pelo ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
-        if (usuarioRepository.existsById(id)) {
-            usuarioRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
+        if (usuario.isPresent()) {
+            return ResponseEntity.ok(usuario.get());
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                 .body("Email ou senha inválidos.");
         }
     }
 }
