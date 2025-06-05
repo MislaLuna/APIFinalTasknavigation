@@ -2,7 +2,6 @@ package tasknavigation.demo.controller;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +14,7 @@ import tasknavigation.demo.service.UsuarioService;
 
 @RestController
 @RequestMapping("/usuarios")
+@CrossOrigin(origins = "http://localhost:5173") // permite acesso do front
 public class UsuarioController {
 
     @Autowired
@@ -42,12 +42,9 @@ public class UsuarioController {
         }
     }
 
-    // Cria um novo usuário
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String senha = credentials.get("senha");
-    
+    // Realiza o login do usuário
+    @GetMapping("/login")
+    public ResponseEntity<?> login(@RequestParam String email, @RequestParam String senha) {
         Optional<Usuario> usuario = usuarioRepository.findByEmailAndSenha(email, senha);
     
         if (usuario.isPresent()) {
@@ -64,6 +61,23 @@ public class UsuarioController {
         return usuario.map(ResponseEntity::ok)
                       .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    @PostMapping
+public ResponseEntity<?> criarUsuario(@RequestBody Usuario novoUsuario) {
+    try {
+        // Verificar se já existe um usuário com este email
+        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(novoUsuario.getEmail());
+        if (usuarioExistente.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Já existe um usuário com este email.");
+        }
+
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao criar usuário: " + e.getMessage());
+    }
+}
 
     // Atualiza um usuário existente pelo ID
     @PutMapping("/{id}")
