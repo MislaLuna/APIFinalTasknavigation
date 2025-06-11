@@ -2,6 +2,7 @@ package tasknavigation.demo.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,33 +55,34 @@ public class UsuarioController {
         }
     }
 
-    // Busca um usuário pelo ID
-    @GetMapping("/{id}")
+    // Busca um usuário pelo ID - somente números para evitar conflito com outras rotas
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<Usuario> buscarUsuario(@PathVariable Long id) {
         Optional<Usuario> usuario = usuarioRepository.findById(id);
         return usuario.map(ResponseEntity::ok)
                       .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    @PostMapping
-public ResponseEntity<?> criarUsuario(@RequestBody Usuario novoUsuario) {
-    try {
-        // Verificar se já existe um usuário com este email
-        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(novoUsuario.getEmail());
-        if (usuarioExistente.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Já existe um usuário com este email.");
-        }
 
-        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao criar usuário: " + e.getMessage());
+    @PostMapping
+    public ResponseEntity<?> criarUsuario(@RequestBody Usuario novoUsuario) {
+        try {
+            // Verificar se já existe um usuário com este email
+            Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(novoUsuario.getEmail());
+            if (usuarioExistente.isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Já existe um usuário com este email.");
+            }
+
+            Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao criar usuário: " + e.getMessage());
+        }
     }
-}
 
     // Atualiza um usuário existente pelo ID
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<Usuario> atualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
         return usuarioRepository.findById(id).map(usuario -> {
             usuario.setNome(usuarioAtualizado.getNome());
@@ -95,8 +97,19 @@ public ResponseEntity<?> criarUsuario(@RequestBody Usuario novoUsuario) {
         });
     }
 
+    // Endpoint para recuperar senha — não conflita mais com {id}
+    @PostMapping("/recuperar-senha")
+    public ResponseEntity<String> recuperarSenha(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+        
+        // Retorna mensagem genérica para segurança
+        return ResponseEntity.ok("Se este e-mail estiver cadastrado, um link será enviado.");
+    }
+
     // Deleta um usuário pelo ID
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         if (usuarioRepository.existsById(id)) {
             usuarioRepository.deleteById(id);
