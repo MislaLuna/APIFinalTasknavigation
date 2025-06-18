@@ -71,6 +71,13 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- Criptografar senha-->
+		<dependency>
+   		 <groupId>org.springframework.boot</groupId>
+  		  <artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+
 		<!-- Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
