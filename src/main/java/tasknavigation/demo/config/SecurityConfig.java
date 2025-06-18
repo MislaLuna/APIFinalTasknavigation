@@ -10,19 +10,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
 
-    // Bean para criptografia de senhas
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Usuário em memória para autenticação básica
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
@@ -34,14 +37,30 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(user);
     }
 
-    // Configura as regras de segurança HTTP
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // desabilita CSRF para facilitar testes de API REST
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated()) // todas as requisições precisam de autenticação
-            .httpBasic(withDefaults()); // usa autenticação básica HTTP
+            .csrf(csrf -> csrf.disable())
+            .cors(withDefaults()) // ⬅️ Ativa o CORS com base no bean CorsConfigurationSource
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll()) // libera todas as rotas (ajuste conforme necessário)
+            .httpBasic(withDefaults());
 
         return http.build();
+    }
+
+    // ⬇️ Configuração de CORS global
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true); // permite envio de cookies e headers de autenticação
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // aplica para todas as rotas
+
+        return source;
     }
 }
