@@ -9,6 +9,7 @@ import tasknavigation.demo.service.TarefaService;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/tarefas")
 public class TarefaController {
@@ -16,7 +17,7 @@ public class TarefaController {
     @Autowired
     private TarefaService tarefaService;
 
-    @GetMapping
+    @GetMapping 
     public List<Tarefa> listar() {
         return tarefaService.listarTodas();
     }

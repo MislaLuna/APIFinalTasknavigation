@@ -1,26 +1,30 @@
-    package tasknavigation.demo.service;
+package tasknavigation.demo.service;
 
-    import java.util.Optional;
-    import java.util.List;
-    import org.springframework.security.crypto.password.PasswordEncoder;
-    import org.springframework.stereotype.Service;
+import java.util.Optional;
+import java.util.List;
 
-    import tasknavigation.demo.domain.Usuario;
-    import tasknavigation.demo.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-    @Service
+import tasknavigation.demo.domain.Usuario;
+import tasknavigation.demo.repository.UsuarioRepository;
+
+import java.sql.CallableStatement;
+
+@Service
 public class UsuarioService {
 
-    
-    private PasswordEncoder passwordEncoder;
-
+    private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public UsuarioService(PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
+    // Injeção via construtor (melhor prática)
+    public UsuarioService(PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, JdbcTemplate jdbcTemplate) {
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
-    
 
     public List<Usuario> listarUsuario() {
         return (List<Usuario>) usuarioRepository.findAll();
@@ -43,5 +47,24 @@ public class UsuarioService {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Cria usuário via procedure no banco, criptografando a senha aqui,
+     * e definindo origem (WEB ou MOBILE)
+     */
+    public void criarUsuarioViaProcedure(Usuario usuario, String origem) {
+        String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
+
+        String sql = "{call sp_CriarUsuario(?, ?, ?, ?)}";
+
+        jdbcTemplate.update(connection -> {
+            CallableStatement cs = connection.prepareCall(sql);
+            cs.setString(1, usuario.getNome());
+            cs.setString(2, usuario.getEmail());
+            cs.setString(3, senhaCriptografada);
+            cs.setString(4, origem);
+            return cs;
+        });
     }
 }
