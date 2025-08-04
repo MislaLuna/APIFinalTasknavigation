@@ -19,10 +19,10 @@ public class Usuario {
 
     private String senha;
 
-    @Column(name = "data_registro")  // Nome real da coluna no banco
+    @Column(name = "data_registro")
     private LocalDate dataRegistro;
 
-    // Novos campos para confirmação de e-mail
+    // Confirmação de e-mail
     @Column(name = "email_confirmado")
     private Boolean emailConfirmado = false;
 
@@ -31,6 +31,13 @@ public class Usuario {
 
     @Column(name = "expira_token")
     private LocalDateTime expiraToken;
+
+    // 🔑 Recuperação de senha
+    @Column(name = "codigo_Recuperacao")
+    private String codigoRecuperacao;
+
+    @Column(name = "codigo_Expiracao")
+    private LocalDateTime codigoExpiracao;
 
     // Construtores
     public Usuario() {}
@@ -44,67 +51,43 @@ public class Usuario {
     }
 
     // Getters e Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public void setId(Long id) { this.id = id; }
 
-    public String getNome() {
-        return nome;
-    }
+    public String getNome() { return nome; }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public void setNome(String nome) { this.nome = nome; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getSenha() {
-        return senha;
-    }
+    public String getSenha() { return senha; }
 
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
+    public void setSenha(String senha) { this.senha = senha; }
 
-    public LocalDate getDataRegistro() {
-        return dataRegistro;
-    }
+    public LocalDate getDataRegistro() { return dataRegistro; }
 
-    public void setDataRegistro(LocalDate dataRegistro) {
-        this.dataRegistro = dataRegistro;
-    }
+    public void setDataRegistro(LocalDate dataRegistro) { this.dataRegistro = dataRegistro; }
 
-    public Boolean getEmailConfirmado() {
-        return emailConfirmado;
-    }
+    public Boolean getEmailConfirmado() { return emailConfirmado; }
 
-    public void setEmailConfirmado(Boolean emailConfirmado) {
-        this.emailConfirmado = emailConfirmado;
-    }
+    public void setEmailConfirmado(Boolean emailConfirmado) { this.emailConfirmado = emailConfirmado; }
 
-    public String getTokenConfirmacao() {
-        return tokenConfirmacao;
-    }
+    public String getTokenConfirmacao() { return tokenConfirmacao; }
 
-    public void setTokenConfirmacao(String tokenConfirmacao) {
-        this.tokenConfirmacao = tokenConfirmacao;
-    }
+    public void setTokenConfirmacao(String tokenConfirmacao) { this.tokenConfirmacao = tokenConfirmacao; }
 
-    public LocalDateTime getExpiraToken() {
-        return expiraToken;
-    }
+    public LocalDateTime getExpiraToken() { return expiraToken; }
 
-    public void setExpiraToken(LocalDateTime expiraToken) {
-        this.expiraToken = expiraToken;
-    }
+    public void setExpiraToken(LocalDateTime expiraToken) { this.expiraToken = expiraToken; }
+
+    public String getCodigoRecuperacao() { return codigoRecuperacao; }
+
+    public void setCodigoRecuperacao(String codigoRecuperacao) { this.codigoRecuperacao = codigoRecuperacao; }
+
+    public LocalDateTime getCodigoExpiracao() { return codigoExpiracao; }
+
+    public void setCodigoExpiracao(LocalDateTime codigoExpiracao) { this.codigoExpiracao = codigoExpiracao; }
 }

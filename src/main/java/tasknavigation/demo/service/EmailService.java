@@ -34,4 +34,14 @@ public class EmailService {
 
         enviarEmailSimples(emailDestino, assunto, corpo);
     }
+
+    // Novo método para envio do código de recuperação de senha
+    public void enviarCodigoRecuperacao(String emailDestino, String codigo) {
+        String assunto = "Recuperação de Senha - TaskNavigation";
+        String corpo = "Olá!\n\nSeu código para recuperação de senha é: " + codigo + "\n\n"
+                     + "Use este código para redefinir sua senha. Ele é válido por 15 minutos.\n"
+                     + "Se você não solicitou essa recuperação, ignore este e-mail.";
+
+        enviarEmailSimples(emailDestino, assunto, corpo);
+    }
 }
