@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.repository.UsuarioRepository;
-import tasknavigation.demo.service.EmailService;
 
 import java.sql.CallableStatement;
 
