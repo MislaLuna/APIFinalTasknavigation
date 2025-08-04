@@ -34,7 +34,6 @@ public class UsuarioController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Criar usuário — envia senha limpa para o service que faz a criptografia
     @PostMapping
     public ResponseEntity<?> criarUsuario(@RequestBody Map<String, Object> body) {
         try {
@@ -56,53 +55,76 @@ public class UsuarioController {
             Usuario usuario = new Usuario();
             usuario.setNome(nome);
             usuario.setEmail(email);
-            usuario.setSenha(senha);  // senha sem criptografia aqui
+            usuario.setSenha(senha);
 
-            System.out.println("🔐 Criando usuário...");
-            System.out.println("Senha recebida: " + senha);
+            service.incluirUsuario(usuario);
 
-            service.criarUsuarioViaProcedure(usuario, origem);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body("Usuário criado com sucesso");
+            return ResponseEntity.status(HttpStatus.CREATED).body("Usuário criado com sucesso. Confirme seu e-mail.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao criar usuário: " + e.getMessage());
         }
     }
 
-    // Login do usuário — compara senha com hash salvo no banco
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String senha = body.get("senha");
+public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+    String email = body.get("email");
+    String senha = body.get("senha");
 
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+    Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
 
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
+    if (usuarioOpt.isPresent()) {
+        Usuario usuario = usuarioOpt.get();
 
-            System.out.println("🔐 Tentando login com:");
-            System.out.println("Email: '" + email + "'");
-            System.out.println("Senha recebida: '" + senha + "'");
-            System.out.println("Senha no banco: '" + usuario.getSenha() + "'");
-
-            boolean valid = passwordEncoder.matches(senha, usuario.getSenha());
-            System.out.println("Senha válida? " + valid);
-
-            if (valid) {
-                return ResponseEntity.ok(usuario);
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+        // 🔒 Verifica se o e-mail já foi confirmado
+        if (!usuario.getEmailConfirmado()) {
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body("Confirme seu e-mail antes de fazer login.");
         }
-    }
 
-    // Listar todos os usuários
+        // 🔐 Verifica a senha
+        boolean valid = passwordEncoder.matches(senha, usuario.getSenha());
+
+        if (valid) {
+            return ResponseEntity.ok(usuario);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
+        }
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+    }
+}
+
+
     @GetMapping
     public ResponseEntity<List<Usuario>> listarUsuarios() {
         List<Usuario> usuarios = usuarioRepository.findAll();
         return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/confirmar-email")
+    public ResponseEntity<?> confirmarEmail(@RequestParam String token) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByTokenConfirmacao(token);
+
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Token inválido ou usuário não encontrado.");
+        }
+
+        Usuario usuario = usuarioOpt.get();
+
+        if (usuario.getExpiraToken() != null && usuario.getExpiraToken().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Token expirado. Solicite um novo.");
+        }
+
+        usuario.setEmailConfirmado(true);
+        usuario.setTokenConfirmacao(null);
+        usuario.setExpiraToken(null);
+
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok("E-mail confirmado com sucesso!");
     }
 }
