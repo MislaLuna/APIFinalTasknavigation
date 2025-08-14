@@ -35,11 +35,19 @@ public class UsuarioService {
     }
 
     public List<Usuario> listarUsuario() {
-        return (List<Usuario>) usuarioRepository.findAll();
+        return usuarioRepository.findAll();
     }
 
     public Optional<Usuario> obterUsuarioId(Long id) {
         return usuarioRepository.findById(id);
+    }
+
+    public Optional<Usuario> buscarPorEmail(String email) {
+        return usuarioRepository.findByEmail(email);
+    }
+
+    public Usuario salvar(Usuario usuario) {
+        return usuarioRepository.save(usuario);
     }
 
     public Usuario incluirUsuario(Usuario usuario) {
@@ -84,13 +92,13 @@ public class UsuarioService {
         Optional<Usuario> usuarioOpt = usuarioRepository.findByTokenConfirmacao(token);
 
         if (usuarioOpt.isEmpty()) {
-            return false; // Token inválido
+            return false;
         }
 
         Usuario usuario = usuarioOpt.get();
 
         if (usuario.getExpiraToken() == null || usuario.getExpiraToken().isBefore(LocalDateTime.now())) {
-            return false; // Token expirado
+            return false;
         }
 
         usuario.setEmailConfirmado(true);

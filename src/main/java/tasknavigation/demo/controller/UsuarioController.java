@@ -5,8 +5,8 @@ import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import tasknavigation.demo.domain.Usuario;
-import tasknavigation.demo.repository.UsuarioRepository;
 import tasknavigation.demo.service.EmailService;
+import tasknavigation.demo.service.UsuarioService;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -19,13 +19,21 @@ import java.util.UUID;
 public class UsuarioController {
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private UsuarioService usuarioService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private EmailService emailService; // ✅ Injeção do serviço de e-mail
+    private EmailService emailService;
+
+    /** 
+     * ✅ Novo endpoint para listar todos os usuários
+     */
+    @GetMapping
+    public ResponseEntity<?> listarUsuarios() {
+        return ResponseEntity.ok(usuarioService.listarUsuario());
+    }
 
     /**
      * Etapa 1 - Envia o código de recuperação para o e-mail informado
@@ -34,20 +42,18 @@ public class UsuarioController {
     public ResponseEntity<String> enviarCodigoRecuperacao(@RequestBody Map<String, String> body) {
         String email = body.get("email");
 
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
         if (usuarioOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
         }
 
         Usuario usuario = usuarioOpt.get();
-        String codigo = UUID.randomUUID().toString().substring(0, 6); // código de 6 caracteres
+        String codigo = UUID.randomUUID().toString().substring(0, 6);
         usuario.setCodigoRecuperacao(codigo);
-        usuario.setCodigoExpiracao(LocalDateTime.now().plusMinutes(15)); // expira em 15 min
-        usuarioRepository.save(usuario);
+        usuario.setCodigoExpiracao(LocalDateTime.now().plusMinutes(15));
+        usuarioService.salvar(usuario);
 
-        // Envia o e-mail usando o EmailService
         emailService.enviarCodigoRecuperacao(usuario.getEmail(), codigo);
-
         return ResponseEntity.ok("Código enviado para o e-mail.");
     }
 
@@ -59,7 +65,7 @@ public class UsuarioController {
         String email = body.get("email");
         String codigo = body.get("codigo");
 
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
 
         if (usuarioOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
@@ -86,39 +92,40 @@ public class UsuarioController {
         String email = body.get("email");
         String novaSenha = body.get("novaSenha");
 
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
 
         if (usuarioOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
         }
 
         Usuario usuario = usuarioOpt.get();
-
         usuario.setSenha(passwordEncoder.encode(novaSenha));
-        usuario.setCodigoRecuperacao(null); // limpa o código após uso
+        usuario.setCodigoRecuperacao(null);
         usuario.setCodigoExpiracao(null);
-        usuarioRepository.save(usuario);
+        usuarioService.salvar(usuario);
 
         return ResponseEntity.ok("Senha redefinida com sucesso!");
     }
-        // *** NOVO ENDPOINT: LOGIN ***
-        @PostMapping("/login")
-        public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-            String email = body.get("email");
-            String senha = body.get("senha");
-    
-            Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
-            if (usuarioOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
-            }
-    
-            Usuario usuario = usuarioOpt.get();
-    
-            if (!passwordEncoder.matches(senha, usuario.getSenha())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
-            }
-    
-            // Retorna os dados do usuário, ou pode retornar token JWT se quiser
-            return ResponseEntity.ok(usuario);
+
+    /**
+     * Login de usuário
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String senha = body.get("senha");
+
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
         }
+
+        Usuario usuario = usuarioOpt.get();
+
+        if (!passwordEncoder.matches(senha, usuario.getSenha())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
+        }
+
+        return ResponseEntity.ok(usuario);
+    }
 }
