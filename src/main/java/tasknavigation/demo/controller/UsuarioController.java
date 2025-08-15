@@ -28,11 +28,29 @@ public class UsuarioController {
     private EmailService emailService;
 
     /** 
-     * ✅ Novo endpoint para listar todos os usuários
+     * ✅ Listar todos os usuários
      */
     @GetMapping
     public ResponseEntity<?> listarUsuarios() {
         return ResponseEntity.ok(usuarioService.listarUsuario());
+    }
+
+    /**
+     * ✅ Criar nova conta
+     */
+    @PostMapping
+    public ResponseEntity<?> criarUsuario(@RequestBody Usuario usuario) {
+        // Verifica se já existe e-mail cadastrado
+        Optional<Usuario> usuarioExistente = usuarioService.buscarPorEmail(usuario.getEmail());
+        if (usuarioExistente.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("E-mail já cadastrado.");
+        }
+
+        // Criptografa a senha antes de salvar
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+
+        Usuario novoUsuario = usuarioService.salvar(usuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
     }
 
     /**
