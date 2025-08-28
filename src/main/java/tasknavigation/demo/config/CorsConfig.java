@@ -1,4 +1,5 @@
 package tasknavigation.demo.config;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -13,8 +14,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")  // aplica para todas as rotas
-                        .allowedOrigins("*") // permite todas as origens
-                        .allowedMethods("*") // permite todos os métodos HTTP (GET, POST, etc)
+                        .allowedOriginPatterns("*") // permite qualquer origem (web + mobile)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT")
                         .allowedHeaders("*"); // permite todos os headers
             }
         };
