@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.service.EmailService;
 import tasknavigation.demo.service.UsuarioService;
+import tasknavigation.demo.util.JwtUtil;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -17,10 +18,10 @@ import java.util.UUID;
 @RequestMapping("/usuarios")
 @CrossOrigin(origins = {
     "http://localhost:59186",  // Flutter Web
-    "http://localhost:5173",   // caso rode em outra porta
-    "http://10.0.2.2:8080",    // emulador Android
-    "http://192.168.56.1:8080" // IP da sua máquina/VM
-}) // agora permite todas as origens
+    "http://localhost:5173",   
+    "http://10.0.2.2:8080",    
+    "http://192.168.56.1:8080"
+})
 public class UsuarioController {
 
     @Autowired
@@ -32,43 +33,31 @@ public class UsuarioController {
     @Autowired
     private EmailService emailService;
 
-    /** 
-     * ✅ Listar todos os usuários
-     */
+    /** Listar todos os usuários */
     @GetMapping
     public ResponseEntity<?> listarUsuarios() {
         return ResponseEntity.ok(usuarioService.listarUsuario());
     }
 
-    /**
-     * ✅ Criar nova conta
-     */
+    /** Criar nova conta */
     @PostMapping
     public ResponseEntity<?> criarUsuario(@RequestBody Usuario usuario) {
-        // Verifica se já existe e-mail cadastrado
         Optional<Usuario> usuarioExistente = usuarioService.buscarPorEmail(usuario.getEmail());
         if (usuarioExistente.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("E-mail já cadastrado.");
         }
 
-        // Criptografa a senha antes de salvar
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
-
         Usuario novoUsuario = usuarioService.salvar(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
     }
 
-    /**
-     * Etapa 1 - Envia o código de recuperação para o e-mail informado
-     */
+    /** Enviar código de recuperação */
     @PostMapping("/enviar-codigo-recuperacao")
     public ResponseEntity<String> enviarCodigoRecuperacao(@RequestBody Map<String, String> body) {
         String email = body.get("email");
-
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
-        }
+        if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
 
         Usuario usuario = usuarioOpt.get();
         String codigo = UUID.randomUUID().toString().substring(0, 6);
@@ -80,46 +69,29 @@ public class UsuarioController {
         return ResponseEntity.ok("Código enviado para o e-mail.");
     }
 
-    /**
-     * Etapa 2 - Verifica se o código informado é válido e não expirou
-     */
+    /** Verificar código de recuperação */
     @PostMapping("/verificar-codigo")
     public ResponseEntity<String> verificarCodigo(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         String codigo = body.get("codigo");
-
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
-        }
+        if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
 
         Usuario usuario = usuarioOpt.get();
-
-        if (!codigo.equals(usuario.getCodigoRecuperacao())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código inválido.");
-        }
-
-        if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now())) {
+        if (!codigo.equals(usuario.getCodigoRecuperacao())) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código inválido.");
+        if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now()))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código expirado.");
-        }
 
         return ResponseEntity.ok("Código válido.");
     }
 
-    /**
-     * Etapa 3 - Redefine a senha após o código ser validado
-     */
+    /** Redefinir senha */
     @PostMapping("/recuperar-senha")
     public ResponseEntity<String> recuperarSenha(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         String novaSenha = body.get("novaSenha");
-
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
-        }
+        if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
 
         Usuario usuario = usuarioOpt.get();
         usuario.setSenha(passwordEncoder.encode(novaSenha));
@@ -130,25 +102,26 @@ public class UsuarioController {
         return ResponseEntity.ok("Senha redefinida com sucesso!");
     }
 
-    /**
-     * Login de usuário
-     */
+    /** Login com JWT */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         String senha = body.get("senha");
-
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-        if (usuarioOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
-        }
+
+        if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
 
         Usuario usuario = usuarioOpt.get();
-
-        if (!passwordEncoder.matches(senha, usuario.getSenha())) {
+        if (!passwordEncoder.matches(senha, usuario.getSenha()))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
-        }
 
-        return ResponseEntity.ok(usuario);
+        // Gera token JWT
+        String token = JwtUtil.generateToken(usuario.getEmail());
+
+        // Retorna usuário + token
+        return ResponseEntity.ok(Map.of(
+            "token", token,
+            "usuario", usuario
+        ));
     }
 }
