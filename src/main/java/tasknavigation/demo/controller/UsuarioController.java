@@ -15,7 +15,12 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/usuarios")
-@CrossOrigin(origins = "*") // agora permite todas as origens
+@CrossOrigin(origins = {
+    "http://localhost:59186",  // Flutter Web
+    "http://localhost:5173",   // caso rode em outra porta
+    "http://10.0.2.2:8080",    // emulador Android
+    "http://192.168.56.1:8080" // IP da sua máquina/VM
+}) // agora permite todas as origens
 public class UsuarioController {
 
     @Autowired
