@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import tasknavigation.demo.domain.Equipe;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.service.EmailService;
+import tasknavigation.demo.service.EquipeService;
 import tasknavigation.demo.service.UsuarioService;
 import tasknavigation.demo.util.JwtUtil;
 
@@ -26,6 +28,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private EquipeService equipeService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -56,8 +61,6 @@ public class UsuarioController {
         usuario.setNome(nome);
         usuario.setEmail(email);
         usuario.setSenha(passwordEncoder.encode(senha));
-
-        // Define nível de acesso
         usuario.setNivelAcesso(isWebLogin ? "ADMIN" : "USUARIO");
 
         Usuario novoUsuario = usuarioService.salvar(usuario);
@@ -90,7 +93,8 @@ public class UsuarioController {
         if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
 
         Usuario usuario = usuarioOpt.get();
-        if (!codigo.equals(usuario.getCodigoRecuperacao())) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código inválido.");
+        if (!codigo.equals(usuario.getCodigoRecuperacao()))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código inválido.");
         if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now()))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código expirado.");
 
@@ -119,7 +123,7 @@ public class UsuarioController {
     public ResponseEntity<?> login(@RequestBody Map<String, Object> body) {
         String email = (String) body.get("email");
         String senha = (String) body.get("senha");
-        Boolean isWebLogin = (Boolean) body.getOrDefault("isWebLogin", false); // flag para web/mobile
+        Boolean isWebLogin = (Boolean) body.getOrDefault("isWebLogin", false);
 
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
         if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
@@ -128,17 +132,35 @@ public class UsuarioController {
         if (!passwordEncoder.matches(senha, usuario.getSenha()))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
 
-        // Define o nível de acesso dinamicamente
         String nivelAcesso = isWebLogin ? "ADMIN" : "USUARIO";
-
-        // Gera token JWT
         String token = JwtUtil.generateToken(usuario.getEmail());
 
-        // Retorna usuário + token + nível de acesso
         return ResponseEntity.ok(Map.of(
             "token", token,
             "usuario", usuario,
             "nivelAcesso", nivelAcesso
         ));
+    }
+
+    /** Aceitar convite para equipe */
+    @PostMapping("/aceitar-convite")
+    public ResponseEntity<?> aceitarConvite(@RequestBody Map<String, String> body) {
+        String email = body.get("email"); // email do usuário logado
+        String codigoConvite = body.get("codigoConvite");
+
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
+        if (usuarioOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+
+        Usuario usuario = usuarioOpt.get();
+
+        Optional<Equipe> equipeOpt = equipeService.buscarPorCodigoConvite(codigoConvite);
+        if (equipeOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código de convite inválido");
+
+        usuario.setEquipe(equipeOpt.get());
+        usuarioService.salvar(usuario);
+
+        return ResponseEntity.ok("Convite aceito com sucesso!");
     }
 }

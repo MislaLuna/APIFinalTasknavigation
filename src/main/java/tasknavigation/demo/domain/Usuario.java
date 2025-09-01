@@ -22,7 +22,7 @@ public class Usuario {
     @Column(name = "data_registro")
     private LocalDate dataRegistro;
 
-    @Column(name = "nivelAcesso")
+    @Column(name = "nivelAcesso") // mapeia para a coluna no banco
     private String nivelAcesso; // ADMIN ou USUARIO
 
     // Confirmação de e-mail
@@ -41,6 +41,11 @@ public class Usuario {
 
     @Column(name = "codigo_expiracao")
     private LocalDateTime codigoExpiracao;
+
+    // Relacionamento com equipe
+    @ManyToOne
+    @JoinColumn(name = "equipe_id")
+    private Equipe equipe;
 
     // Construtores
     public Usuario() {}
@@ -87,4 +92,7 @@ public class Usuario {
 
     public LocalDateTime getCodigoExpiracao() { return codigoExpiracao; }
     public void setCodigoExpiracao(LocalDateTime codigoExpiracao) { this.codigoExpiracao = codigoExpiracao; }
+
+    public Equipe getEquipe() { return equipe; }
+    public void setEquipe(Equipe equipe) { this.equipe = equipe; }
 }
