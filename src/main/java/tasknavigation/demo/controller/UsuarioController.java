@@ -41,13 +41,25 @@ public class UsuarioController {
 
     /** Criar nova conta */
     @PostMapping
-    public ResponseEntity<?> criarUsuario(@RequestBody Usuario usuario) {
-        Optional<Usuario> usuarioExistente = usuarioService.buscarPorEmail(usuario.getEmail());
+    public ResponseEntity<?> criarUsuario(@RequestBody Map<String, Object> body) {
+        String nome = (String) body.get("nome");
+        String email = (String) body.get("email");
+        String senha = (String) body.get("senha");
+        Boolean isWebLogin = (Boolean) body.getOrDefault("isWebLogin", false);
+
+        Optional<Usuario> usuarioExistente = usuarioService.buscarPorEmail(email);
         if (usuarioExistente.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("E-mail já cadastrado.");
         }
 
-        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        Usuario usuario = new Usuario();
+        usuario.setNome(nome);
+        usuario.setEmail(email);
+        usuario.setSenha(passwordEncoder.encode(senha));
+
+        // Define nível de acesso
+        usuario.setNivelAcesso(isWebLogin ? "ADMIN" : "USUARIO");
+
         Usuario novoUsuario = usuarioService.salvar(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
     }
@@ -104,24 +116,29 @@ public class UsuarioController {
 
     /** Login com JWT */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String senha = body.get("senha");
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
+    public ResponseEntity<?> login(@RequestBody Map<String, Object> body) {
+        String email = (String) body.get("email");
+        String senha = (String) body.get("senha");
+        Boolean isWebLogin = (Boolean) body.getOrDefault("isWebLogin", false); // flag para web/mobile
 
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
         if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
 
         Usuario usuario = usuarioOpt.get();
         if (!passwordEncoder.matches(senha, usuario.getSenha()))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Senha incorreta");
 
+        // Define o nível de acesso dinamicamente
+        String nivelAcesso = isWebLogin ? "ADMIN" : "USUARIO";
+
         // Gera token JWT
         String token = JwtUtil.generateToken(usuario.getEmail());
 
-        // Retorna usuário + token
+        // Retorna usuário + token + nível de acesso
         return ResponseEntity.ok(Map.of(
             "token", token,
-            "usuario", usuario
+            "usuario", usuario,
+            "nivelAcesso", nivelAcesso
         ));
     }
 }

@@ -22,6 +22,9 @@ public class Usuario {
     @Column(name = "data_registro")
     private LocalDate dataRegistro;
 
+    @Column(name = "nivelAcesso")
+    private String nivelAcesso; // ADMIN ou USUARIO
+
     // Confirmação de e-mail
     @Column(name = "email_confirmado")
     private Boolean emailConfirmado = false;
@@ -42,11 +45,12 @@ public class Usuario {
     // Construtores
     public Usuario() {}
 
-    public Usuario(String nome, String email, String senha, LocalDate dataRegistro) {
+    public Usuario(String nome, String email, String senha, LocalDate dataRegistro, String nivelAcesso) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.dataRegistro = dataRegistro;
+        this.nivelAcesso = nivelAcesso;
         this.emailConfirmado = false;
     }
 
@@ -65,6 +69,9 @@ public class Usuario {
 
     public LocalDate getDataRegistro() { return dataRegistro; }
     public void setDataRegistro(LocalDate dataRegistro) { this.dataRegistro = dataRegistro; }
+
+    public String getNivelAcesso() { return nivelAcesso; }
+    public void setNivelAcesso(String nivelAcesso) { this.nivelAcesso = nivelAcesso; }
 
     public Boolean getEmailConfirmado() { return emailConfirmado; }
     public void setEmailConfirmado(Boolean emailConfirmado) { this.emailConfirmado = emailConfirmado; }
