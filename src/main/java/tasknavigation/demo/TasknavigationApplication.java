@@ -26,10 +26,11 @@ class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Permite todas as rotas
-                .allowedOrigins("http://localhost:5173") // URL do seu frontend Vite
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos permitidos
-                .allowCredentials(true); // Permitir cookies
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173", "http://localhost:53277", "http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
 	

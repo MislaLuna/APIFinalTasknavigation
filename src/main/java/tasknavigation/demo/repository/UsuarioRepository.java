@@ -1,14 +1,14 @@
-package tasknavigation.demo.repository;
+    package tasknavigation.demo.repository;
 
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import tasknavigation.demo.domain.Usuario;
+    import java.util.Optional;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    import tasknavigation.demo.domain.Usuario;
 
-public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    Optional<Usuario> findByEmail(String email);
+        Optional<Usuario> findByEmail(String email);
 
-    Optional<Usuario> findByEmailAndSenha(String email, String senha);
+        Optional<Usuario> findByEmailAndSenha(String email, String senha);
 
-    Optional<Usuario> findByTokenConfirmacao(String tokenConfirmacao); // método para confirmar email
-}
+        Optional<Usuario> findByTokenConfirmacao(String tokenConfirmacao); // método para confirmar email
+    }

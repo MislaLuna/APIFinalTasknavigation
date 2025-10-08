@@ -1,6 +1,8 @@
 package tasknavigation.demo.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -11,12 +13,15 @@ public class Equipe {
     private Long id;
 
     private String nome;
+    
+    private String descricao;
 
     @Column(unique = true)
     private String codigoConvite;
 
-    @OneToMany(mappedBy = "equipe")
-    private List<Usuario> usuarios;
+    @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference // Evita loop na serialização JSON
+    private List<Usuario> usuarios = new ArrayList<>();
 
     public Equipe() {}
 
@@ -30,6 +35,9 @@ public class Equipe {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+    
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
 
     public String getCodigoConvite() { return codigoConvite; }
     public void setCodigoConvite(String codigoConvite) { this.codigoConvite = codigoConvite; }

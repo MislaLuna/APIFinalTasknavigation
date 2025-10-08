@@ -2,7 +2,10 @@ package tasknavigation.demo.domain;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
@@ -12,21 +15,25 @@ public class Projeto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_projeto")
-    private Long idProjeto;  // ALTERADO para Long ( pq tava dando erro com integer )
+    private Long idProjeto;
 
     private String nome;
     private String descricao;
     private LocalDate prazo;
 
     @ManyToOne
-    @JsonIgnoreProperties("projeto")
+    @JsonIgnoreProperties({"projetos", "tarefas"}) // evita loop ao serializar usuário
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;
+
+@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
+@JsonIgnoreProperties("projeto") // já existente
+private List<Tarefa> tarefas = new ArrayList<>();
+
 
     public Projeto() {}
 
     // Getters e setters
-
     public Long getIdProjeto() {
         return idProjeto;
     }
@@ -65,5 +72,13 @@ public class Projeto {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public List<Tarefa> getTarefas() {
+        return tarefas;
+    }
+
+    public void setTarefas(List<Tarefa> tarefas) {
+        this.tarefas = tarefas;
     }
 }

@@ -33,4 +33,23 @@ public class EquipeService {
     public List<Equipe> listarEquipes() {
         return equipeRepository.findAll();
     }
+    
+    // Busca todas as equipes
+    public List<Equipe> buscarTodas() {
+        return equipeRepository.findAll();
+    }
+
+    // Deleta equipe pelo ID
+    public boolean deletarPorId(Long id) {
+        if (equipeRepository.existsById(id)) {
+            equipeRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+    
+    // Deleta equipe
+    public void deletar(Long id) {
+        equipeRepository.deleteById(id);
+    }
 }

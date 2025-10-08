@@ -3,6 +3,8 @@ package tasknavigation.demo.domain;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "Tarefa")
 public class Tarefa {
@@ -10,7 +12,7 @@ public class Tarefa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_tarefa")
-    private Integer idTarefa;
+    private Long idTarefa;
 
     private String titulo;
     private String descricao;
@@ -21,26 +23,30 @@ public class Tarefa {
 
     @Column(nullable = false)
     private String prioridade; // "Alta", "Média", "Baixa"
-
-    @ManyToOne
-    @JoinColumn(name = "id_usuario")
-    private Usuario usuario;
     
+@ManyToOne
+@JoinColumn(name = "id_projeto", nullable = true) // <- aqui permitimos nulo
+@JsonIgnoreProperties("tarefas")
+private Projeto projeto;
 
-    @ManyToOne
-    @JoinColumn(name = "id_projeto")
-    private Projeto projeto;
+@ManyToOne
+@JoinColumn(name = "id_usuario")
+@JsonIgnoreProperties({"projetos", "tarefas"}) // evita loop com o usuário
+private Usuario usuario;
+
+
+
 
     public Tarefa() {}
 
     // Getters e setters
 
-    public Integer getIdTarefa() {
+    public Long getIdTarefa() {
         return idTarefa;
     }
 
-    public void setIdTarefa(Integer idTarefa) {
-        this.idTarefa = idTarefa;
+    public void setIdTarefa(Long id) {
+        this.idTarefa = id;
     }
 
     public String getTitulo() {

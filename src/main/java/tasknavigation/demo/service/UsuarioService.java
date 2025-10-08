@@ -50,6 +50,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    /*
     public Usuario incluirUsuario(Usuario usuario) {
         String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
         usuario.setSenha(senhaCriptografada);
@@ -112,4 +113,6 @@ public class UsuarioService {
     private String gerarToken() {
         return UUID.randomUUID().toString();
     }
+
+    */
 }

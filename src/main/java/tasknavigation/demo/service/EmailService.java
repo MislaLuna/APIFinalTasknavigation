@@ -15,6 +15,7 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    /** Envia e-mail simples */
     public void enviarEmailSimples(String to, String subject, String text) {
         SimpleMailMessage mensagem = new SimpleMailMessage();
         mensagem.setTo(to);
@@ -23,24 +24,35 @@ public class EmailService {
         mailSender.send(mensagem);
     }
 
+    /** Envia confirmação de e-mail */
     public void enviarConfirmacaoEmail(String emailDestino, String token) {
         String linkConfirmacao = baseUrl + "/usuarios/confirmar-email?token=" + token;
 
         String assunto = "Confirmação de E-mail - TaskNavigation";
         String corpo = "Olá! Obrigado por se cadastrar no TaskNavigation.\n\n"
-                     + "Por favor, clique no link abaixo para confirmar seu e-mail:\n"
-                     + linkConfirmacao + "\n\n"
-                     + "Este link expira em 30 minutos.";
+                    + "Por favor, clique no link abaixo para confirmar seu e-mail:\n"
+                    + linkConfirmacao + "\n\n"
+                    + "Este link expira em 30 minutos.";
 
         enviarEmailSimples(emailDestino, assunto, corpo);
     }
 
-    // Novo método para envio do código de recuperação de senha
+    /** Envia convite para colaborador de equipe */
+    public void enviarConviteColaborador(String emailDestino, String nomeEquipe, String codigoConvite) {
+        String assunto = "Convite para Equipe - TaskNavigation";
+        String corpo = "Olá!\n\nVocê foi convidado para a equipe \"" + nomeEquipe + "\".\n" +
+                       "Código de convite: " + codigoConvite + "\n\n" +
+                       "Acesse o TaskNavigation para aceitar o convite.";
+
+        enviarEmailSimples(emailDestino, assunto, corpo);
+    }
+
+    /** Envia código de recuperação de senha */
     public void enviarCodigoRecuperacao(String emailDestino, String codigo) {
         String assunto = "Recuperação de Senha - TaskNavigation";
         String corpo = "Olá!\n\nSeu código para recuperação de senha é: " + codigo + "\n\n"
-                     + "Use este código para redefinir sua senha. Ele é válido por 15 minutos.\n"
-                     + "Se você não solicitou essa recuperação, ignore este e-mail.";
+                    + "Use este código para redefinir sua senha. Ele é válido por 15 minutos.\n"
+                    + "Se você não solicitou essa recuperação, ignore este e-mail.";
 
         enviarEmailSimples(emailDestino, assunto, corpo);
     }

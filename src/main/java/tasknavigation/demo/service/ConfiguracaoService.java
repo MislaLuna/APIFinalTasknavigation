@@ -1,33 +1,32 @@
 package tasknavigation.demo.service;
 
-import java.util.Optional;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.util.List;
 import tasknavigation.demo.domain.Configuracao;
 import tasknavigation.demo.repository.ConfiguracaoRepository;
 
 @Service
 public class ConfiguracaoService {
 
-    @Autowired
-    private ConfiguracaoRepository configuracaoRepository;
+    private final ConfiguracaoRepository configuracaoRepository;
 
-    // Lista todas as configurações
+    public ConfiguracaoService(ConfiguracaoRepository configuracaoRepository) {
+        this.configuracaoRepository = configuracaoRepository;
+    }
+
     public List<Configuracao> listarConfiguracao() {
-        return (List<Configuracao>) configuracaoRepository.findAll();
+        return configuracaoRepository.findAll();
     }
 
-    // Buscar uma configuração pelo ID
-    public Optional<Configuracao> obterConfiguracaoId(Long id) {
-        return configuracaoRepository.findById(id);
-    }
-
-    // Incluir nova configuração
-    public Configuracao incluirConfiguracao(Configuracao configuracao) {
+    public Configuracao salvar(Configuracao configuracao) {
         return configuracaoRepository.save(configuracao);
     }
-} 
-    // Atualizar configuração existente
-   
+
+    public Configuracao buscarPorId(Long id) {
+        return configuracaoRepository.findById(id).orElse(null);
+    }
+
+    public void deletar(Long id) {
+        configuracaoRepository.deleteById(id);
+    }
+}

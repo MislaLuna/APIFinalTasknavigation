@@ -1,11 +1,17 @@
 package tasknavigation.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.security.AuthorizationAuditListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tasknavigation.demo.domain.Projeto;
+import tasknavigation.demo.domain.Tarefa;
+import tasknavigation.demo.domain.Usuario;
+import tasknavigation.demo.dto.ProjetoDTO;
 import tasknavigation.demo.service.ProjetoService;
+import tasknavigation.demo.service.UsuarioService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +21,10 @@ public class ProjetoController {
 
     @Autowired
     private ProjetoService projetoService;
+
+    @Autowired
+    private UsuarioService usuarioService;
+
 
     @GetMapping
     public List<Projeto> listar() {
@@ -29,7 +39,15 @@ public class ProjetoController {
     }
 
     @PostMapping
-    public Projeto criar(@RequestBody Projeto projeto) {
+    public Projeto criar(@RequestBody ProjetoDTO projetoDTO) {
+        Usuario usuario = usuarioService.obterUsuarioId(projetoDTO.getIdUsuario())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com id: " + projetoDTO.getIdUsuario()));
+
+        Projeto projeto = new Projeto();
+        projeto.setNome(projetoDTO.getNome() != null ? projetoDTO.getNome(): "Nome do projeto");
+        projeto.setDescricao(projetoDTO.getDescricao() != null ? projetoDTO.getDescricao(): "Descricao do projeto");
+        projeto.setPrazo(projetoDTO.getPrazo() != null ? projetoDTO.getPrazo(): LocalDate.parse("2025-10-15"));
+        projeto.setUsuario(usuario);
         return projetoService.salvar(projeto);
     }
 

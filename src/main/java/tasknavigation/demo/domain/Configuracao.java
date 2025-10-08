@@ -25,7 +25,6 @@ public class Configuracao {
     private Usuario usuario;
 
     // Getters e Setters
-
     public Long getIdConfiguracao() {
         return idConfiguracao;
     }
