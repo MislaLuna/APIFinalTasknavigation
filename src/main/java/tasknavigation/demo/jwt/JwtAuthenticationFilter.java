@@ -28,45 +28,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		this.userDetailsService = userDetailsService;
 		this.tokenRepository = tokenRepository;
 	}
+@Override
+protected void doFilterInternal(
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
+        @NonNull FilterChain filterChain
+) throws ServletException, IOException {
 
-	@Override
-	protected void doFilterInternal(
-			@NonNull HttpServletRequest request,
-			@NonNull HttpServletResponse response,
-			@NonNull FilterChain filterChain
-	) throws ServletException, IOException {
+    String path = request.getRequestURI();
 
-		final String authHeader = request.getHeader("Authorization");
-		final String token;
-		final String userEmail;
-		if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-		token = authHeader.substring(7);
-		userEmail = jwtService.extractUsername(token);
-		if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-			//UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-			Usuario userDetails = (Usuario) this.userDetailsService.loadUserByUsername(userEmail);
-			System.out.println("ID: " + userDetails.getId());
-			var isTokenValid = tokenRepository.findByToken(token)
-					.map(t -> !t.isExpired() && !t.isRevoked())
-					.orElse(false);
+    // ❌ Ignora rotas públicas
+    if (path.startsWith("/usuarios") ||
+        path.startsWith("/projetos") ||
+        path.startsWith("/tarefas") ||
+        path.startsWith("/auth/authenticate")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
 
-			if (jwtService.isTokenValid(token, userDetails) && isTokenValid) {
-				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-						userDetails,
-						null,
-						userDetails.getAuthorities()
-				);
-				authToken.setDetails(
-						new WebAuthenticationDetailsSource().buildDetails(request)
-				);
-				SecurityContextHolder.getContext().setAuthentication(authToken);
-			}
-		}
-		filterChain.doFilter(request, response);
-	}
+    final String authHeader = request.getHeader("Authorization");
+    final String token;
+    final String userEmail;
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    token = authHeader.substring(7);
+    userEmail = jwtService.extractUsername(token);
+
+    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        Usuario userDetails = (Usuario) this.userDetailsService.loadUserByUsername(userEmail);
+
+        var isTokenValid = tokenRepository.findByToken(token)
+                .map(t -> !t.isExpired() && !t.isRevoked())
+                .orElse(false);
+
+        if (jwtService.isTokenValid(token, userDetails) && isTokenValid) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+            );
+            authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
+
 
 
 }

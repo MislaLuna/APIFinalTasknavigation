@@ -63,7 +63,7 @@ public class SecurityConfiguration {
                                 // 🔹 Liberando temporariamente todas as rotas de projetos e tarefas
                                 .requestMatchers("/projetos/**").permitAll()
                                 .requestMatchers("/tarefas/**").permitAll()
-
+                                
                                 // 🔹 Mantendo rotas abertas
                                 .requestMatchers("/usuarios/**").permitAll()
                                 .requestMatchers("/auth/authenticate").permitAll()

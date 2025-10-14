@@ -46,73 +46,24 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email);
     }
 
+    public Optional<Usuario> buscarPorId(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
     public Usuario salvar(Usuario usuario) {
         return usuarioRepository.save(usuario);
     }
 
+    // ✅ Novo método: busca usuários ativos por equipe
+    public List<Usuario> buscarPorEquipe(Long equipeId) {
+        return usuarioRepository.findByEquipeIdAndCodStatusTrue(equipeId);
+    }
+
     /*
-    public Usuario incluirUsuario(Usuario usuario) {
-        String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
-        usuario.setSenha(senhaCriptografada);
-
-        usuario.setEmailConfirmado(false);
-        usuario.setTokenConfirmacao(gerarToken());
-        usuario.setExpiraToken(LocalDateTime.now().plusMinutes(30));
-
-        Usuario salvo = usuarioRepository.save(usuario);
-        emailService.enviarConfirmacaoEmail(usuario.getEmail(), salvo.getTokenConfirmacao());
-
-        return salvo;
-    }
-
-    public Usuario atualizaUsuario(Long id, Usuario usuario) {
-        if (usuarioRepository.existsById(id)) {
-            usuario.setId(id);
-            return usuarioRepository.save(usuario);
-        } else {
-            return null;
-        }
-    }
-
-    public void criarUsuarioViaProcedure(Usuario usuario, String origem) {
-        String senhaCriptografada = passwordEncoder.encode(usuario.getSenha());
-
-        String sql = "{call sp_CriarUsuario(?, ?, ?, ?)}";
-
-        jdbcTemplate.update(connection -> {
-            CallableStatement cs = connection.prepareCall(sql);
-            cs.setString(1, usuario.getNome());
-            cs.setString(2, usuario.getEmail());
-            cs.setString(3, senhaCriptografada);
-            cs.setString(4, origem);
-            return cs;
-        });
-    }
-
-    public boolean confirmarEmail(String token) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByTokenConfirmacao(token);
-
-        if (usuarioOpt.isEmpty()) {
-            return false;
-        }
-
-        Usuario usuario = usuarioOpt.get();
-
-        if (usuario.getExpiraToken() == null || usuario.getExpiraToken().isBefore(LocalDateTime.now())) {
-            return false;
-        }
-
-        usuario.setEmailConfirmado(true);
-        usuario.setTokenConfirmacao(null);
-        usuario.setExpiraToken(null);
-
-        usuarioRepository.save(usuario);
-        return true;
-    }
-
-    private String gerarToken() {
-        return UUID.randomUUID().toString();
-    }
-
+    public Usuario incluirUsuario(Usuario usuario) { ... }
+    public Usuario atualizaUsuario(Long id, Usuario usuario) { ... }
+    public void criarUsuarioViaProcedure(Usuario usuario, String origem) { ... }
+    public boolean confirmarEmail(String token) { ... }
+    private String gerarToken() { ... }
     */
 }

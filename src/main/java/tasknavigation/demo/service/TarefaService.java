@@ -31,7 +31,7 @@ public Usuario buscarUsuarioPorId(Long id) {
     // Listar todas as tarefas
     public List<Tarefa> listarTodas() {
         return tarefaRepository.findAll();
-    }
+    }   
 
     // Buscar tarefa por ID
     public Optional<Tarefa> buscarPorId(Long id) {
