@@ -56,36 +56,36 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors() // 🔹 Habilita CORS dentro do Spring Security
-                .and()
-                .authorizeHttpRequests(req ->
-                        req
-                                // 🔹 Liberando temporariamente todas as rotas de projetos e tarefas
-                                .requestMatchers("/projetos/**").permitAll()
-                                .requestMatchers("/tarefas/**").permitAll()
-                                
-                                // 🔹 Mantendo rotas abertas
-                                .requestMatchers("/usuarios/**").permitAll()
-                                .requestMatchers("/auth/authenticate").permitAll()
-                                .requestMatchers("/auth/logout").permitAll()
-                                .requestMatchers(WHITE_LIST_URL).permitAll()
+                .cors().and()
 
-                                // 🔹 Qualquer outra rota ainda requer autenticação
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(req -> req
+                        // Rotas públicas temporárias (projetos e tarefas)
+                        .requestMatchers("/projetos/**").permitAll()
+                        .requestMatchers("/tarefas/**").permitAll()
+
+                        // Rotas abertas (auth, swagger, usuários)
+                        .requestMatchers("/usuarios/**").permitAll()
+                        .requestMatchers("/auth/authenticate").permitAll()
+                        .requestMatchers("/auth/logout").permitAll()
+                        .requestMatchers(WHITE_LIST_URL).permitAll()
+
+                        // Qualquer outra rota requer autenticação
+                        .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(
+                        org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout ->
-                        logout.logoutUrl("/auth/logout")
-                                .addLogoutHandler(logoutHandler)
-                                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .addLogoutHandler(logoutHandler)
+                        .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
                 );
-
+        
         return http.build();
     }
 }

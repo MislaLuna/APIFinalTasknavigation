@@ -14,8 +14,20 @@ public class EquipeService {
     @Autowired
     private EquipeRepository equipeRepository;
 
-    // Salva ou atualiza uma equipe
+    // Salva ou atualiza uma equipe com verificação de nome duplicado
     public Equipe salvar(Equipe equipe) {
+        if (equipe.getId() == null) { // Só verifica ao criar
+            if (equipeRepository.existsByNome(equipe.getNome())) {
+                throw new IllegalArgumentException("Já existe uma equipe com esse nome!");
+            }
+        } else { // Ao atualizar, verifica se mudou o nome
+            Optional<Equipe> equipeExistente = equipeRepository.findById(equipe.getId());
+            if (equipeExistente.isPresent() && !equipeExistente.get().getNome().equals(equipe.getNome())) {
+                if (equipeRepository.existsByNome(equipe.getNome())) {
+                    throw new IllegalArgumentException("Já existe uma equipe com esse nome!");
+                }
+            }
+        }
         return equipeRepository.save(equipe);
     }
 

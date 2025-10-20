@@ -51,7 +51,8 @@ public class Usuario implements UserDetails {
     @Column(name = "codigo_expiracao")
     private LocalDateTime codigoExpiracao;
 
-    private boolean codStatus;
+    @Column(name = "codStatus")
+    private String codStatus;
 
     @Transient
     private AuthenticationResponse authenticationResponse;
@@ -110,8 +111,13 @@ public class Usuario implements UserDetails {
     public String getCodigoRecuperacao() { return codigoRecuperacao; }
     public void setCodigoRecuperacao(String codigoRecuperacao) { this.codigoRecuperacao = codigoRecuperacao; }
 
-    public LocalDateTime getCodigoExpiracao() { return codigoExpiracao; }
-    public void setCodigoExpiracao(LocalDateTime codigoExpiracao) { this.codigoExpiracao = codigoExpiracao; }
+    public LocalDateTime getCodigoExpiracao() {
+    return codigoExpiracao;
+}
+
+public void setCodigoExpiracao(LocalDateTime codigoExpiracao) {
+    this.codigoExpiracao = codigoExpiracao;
+}
 
     public Equipe getEquipe() { return equipe; }
     public void setEquipe(Equipe equipe ) { this.equipe = equipe; }
@@ -152,13 +158,15 @@ public class Usuario implements UserDetails {
         return true;
     }
 
-    public boolean isCodStatus() {
-        return codStatus;
-    }
+// Getter
+public String getCodStatus() {
+    return codStatus;
+}
 
-    public void setCodStatus(boolean codStatus) {
-        this.codStatus = codStatus;
-    }
+// Setter
+public void setCodStatus(String codStatus) {
+    this.codStatus = codStatus;
+}
 
     public AuthenticationResponse getAuthenticationResponse() {
         return authenticationResponse;

@@ -6,6 +6,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import tasknavigation.demo.domain.Usuario;
+
 @Service
 public class EmailService {
 
@@ -55,5 +57,10 @@ public class EmailService {
                     + "Se você não solicitou essa recuperação, ignore este e-mail.";
 
         enviarEmailSimples(emailDestino, assunto, corpo);
+    }
+
+    public void enviarEmailConfirmacao(Usuario usuarioSalvo) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'enviarEmailConfirmacao'");
     }
 }

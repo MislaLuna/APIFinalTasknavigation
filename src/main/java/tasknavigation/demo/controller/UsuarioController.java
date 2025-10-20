@@ -27,7 +27,7 @@
             "http://localhost:61759",  // Flutter Web
             "http://localhost:5173",   
             "http://172.19.0.146:8080",    
-            "http://172.19.0.109:8080"
+            "http://192.168.0.10:8080"
         })
         public class UsuarioController {
 

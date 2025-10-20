@@ -9,4 +9,7 @@ public interface EquipeRepository extends JpaRepository<Equipe, Long> {
 
     // Busca uma equipe pelo código de convite
     Optional<Equipe> findByCodigoConvite(String codigoConvite);
+
+    // ✅ Verifica se já existe equipe com esse nome
+    boolean existsByNome(String nome);
 }

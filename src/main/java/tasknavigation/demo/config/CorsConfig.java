@@ -1,25 +1,35 @@
-      package tasknavigation.demo.config;
+package tasknavigation.demo.config;
 
-      import org.springframework.context.annotation.Bean;
-      import org.springframework.context.annotation.Configuration;
-      import org.springframework.web.servlet.config.annotation.CorsRegistry;
-      import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-      @Configuration
-      public class CorsConfig {
+import java.util.List;
+
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        // Permitir seu front
+        config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
         
+        // Permitir todos os métodos HTTP
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Permitir todos os headers
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        
+        // Permitir envio de cookies/credenciais
+        config.setAllowCredentials(true);
 
-
-        @Bean
-      public WebMvcConfigurer corsConfigurer() {
-            return new WebMvcConfigurer() {
-              @Override
-                public void addCorsMappings(CorsRegistry registry) {
-                  registry.addMapping("/**")  // aplica para todas as rotas
-                            .allowedOriginPatterns("*") // permite qualquer origem (web + mobile)
-                          .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT")
-                            .allowedHeaders("*"); // permite todos os headers
-                  }
-              };
-          }
-      }
+        // Registrar a configuração para todas as rotas
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}
