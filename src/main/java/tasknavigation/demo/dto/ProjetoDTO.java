@@ -8,6 +8,15 @@ public class ProjetoDTO {
     private Long idUsuario;
     private LocalDate prazo;
 
+    // Getters e Setters
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
     public String getDescricao() {
         return descricao;
     }
@@ -30,13 +39,5 @@ public class ProjetoDTO {
 
     public void setPrazo(LocalDate prazo) {
         this.prazo = prazo;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
     }
 }

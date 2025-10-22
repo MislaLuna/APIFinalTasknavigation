@@ -23,9 +23,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService,
-                                   UserDetailsService userDetailsService,
-                                   TokenRepository tokenRepository) {
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            UserDetailsService userDetailsService,
+            TokenRepository tokenRepository) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.tokenRepository = tokenRepository;
@@ -38,17 +39,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+        final String path = request.getRequestURI();
 
-        // ❌ Ignora somente rotas públicas (login, refresh)
-        if (path.startsWith("/auth/authenticate") || path.startsWith("/auth/refresh")) {
+        // ✅ Ignorar rotas públicas
+        if (path.startsWith("/auth/")
+                || (path.startsWith("/usuarios") && request.getMethod().equals("POST"))
+                || path.startsWith("/swagger")
+                || path.startsWith("/v3/api-docs")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response); // deixa passar, o Security decide
             return;
         }
 
@@ -64,15 +68,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtService.isTokenValid(token, userDetails) && isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+                        userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-            } else {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
             }
         }
 

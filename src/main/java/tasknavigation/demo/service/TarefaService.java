@@ -8,11 +8,12 @@ import tasknavigation.demo.domain.Tarefa;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.domain.Projeto;
 import tasknavigation.demo.repository.TarefaRepository;
-import tasknavigation.demo.repository.UsuarioRepository;
 import tasknavigation.demo.repository.ProjetoRepository;
+import tasknavigation.demo.repository.UsuarioRepository;
 
 import java.util.List;
 import java.util.Optional;
+
 @Service
 public class TarefaService {
 
@@ -24,6 +25,9 @@ public class TarefaService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private UsuarioService usuarioService; // Para pegar usuário logado
 
     public Usuario buscarUsuarioPorId(Long idUsuario) {
         if (idUsuario == null) {
@@ -38,6 +42,10 @@ public class TarefaService {
     }
 
     public Tarefa salvar(Tarefa tarefa) {
+        // Só associa usuário logado se a tarefa não tiver um usuário definido
+        if (tarefa.getUsuario() == null) {
+            tarefa.setUsuario(usuarioService.getUsuarioLogado());
+        }
         return tarefaRepository.save(tarefa);
     }
 
@@ -49,9 +57,7 @@ public class TarefaService {
         return projetoRepository.findById(idProjeto).orElse(null);
     }
 
-    // NOVO: listar todas as tarefas
     public List<Tarefa> listarTodas() {
         return tarefaRepository.findAll();
     }
 }
-8v

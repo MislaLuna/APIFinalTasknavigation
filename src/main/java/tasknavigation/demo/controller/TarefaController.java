@@ -9,6 +9,7 @@ import tasknavigation.demo.domain.Tarefa;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.dto.TarefaDTO;
 import tasknavigation.demo.service.TarefaService;
+import tasknavigation.demo.service.UsuarioService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +22,9 @@ public class TarefaController {
 
     @Autowired
     private TarefaService tarefaService;
+
+    @Autowired
+    private UsuarioService usuarioService; // Serviço para pegar usuário logado
 
     // Listar todas as tarefas
     @GetMapping
@@ -39,7 +43,13 @@ public class TarefaController {
     // Criar nova tarefa
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody TarefaDTO dto) {
-        Usuario usuario = tarefaService.buscarUsuarioPorId(dto.getIdUsuario());
+
+        //System.out.println("USUARIO ID " + dto.getIdUsuario() );
+        // Pega o usuário logado, caso não venha no DTO
+        Usuario usuario = (dto.getIdUsuario() != null)
+                ? tarefaService.buscarUsuarioPorId(dto.getIdUsuario())
+                : usuarioService.getUsuarioLogado();
+
         if (usuario == null) {
             return ResponseEntity.badRequest().body("Usuário não encontrado.");
         }
@@ -47,7 +57,7 @@ public class TarefaController {
         Tarefa tarefa = new Tarefa();
         tarefa.setTitulo(dto.getTitulo() != null ? dto.getTitulo() : "Título da Tarefa");
         tarefa.setDescricao(dto.getDescricao() != null ? dto.getDescricao() : "Descrição da Tarefa");
-        tarefa.setPrazo(dto.getPrazo() != null ? dto.getPrazo() : LocalDate.now().plusDays(7)); // prazo default 7 dias
+        tarefa.setPrazo(dto.getPrazo() != null ? dto.getPrazo() : LocalDate.now().plusDays(7));
         tarefa.setStatus(dto.getStatus() != null ? dto.getStatus() : "Pendente");
         tarefa.setPrioridade(dto.getPrioridade() != null ? dto.getPrioridade() : "Média");
         tarefa.setUsuario(usuario);
@@ -76,8 +86,14 @@ public class TarefaController {
         tarefa.setPrazo(dto.getPrazo());
         tarefa.setStatus(dto.getStatus());
         tarefa.setPrioridade(dto.getPrioridade());
-        tarefa.setUsuario(tarefaService.buscarUsuarioPorId(dto.getIdUsuario()));
 
+        // Atualiza usuário
+        Usuario usuario = (dto.getIdUsuario() != null)
+                ? tarefaService.buscarUsuarioPorId(dto.getIdUsuario())
+                : usuarioService.getUsuarioLogado();
+        tarefa.setUsuario(usuario);
+
+        // Atualiza projeto
         if (dto.getIdProjeto() != null) {
             Projeto projeto = tarefaService.buscarProjetoPorId(dto.getIdProjeto());
             tarefa.setProjeto(projeto);

@@ -15,6 +15,10 @@ import tasknavigation.demo.exceptions.CustomAccessDeniedHandler;
 import tasknavigation.demo.exceptions.CustomAuthenticationEntryPoint;
 import tasknavigation.demo.jwt.JwtAuthenticationFilter;
 
+import static org.springframework.http.HttpMethod.*;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import static tasknavigation.demo.domain.enums.Permission.*;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -32,7 +36,8 @@ public class SecurityConfiguration {
             "/configuration/security",
             "/swagger-ui/**",
             "/webjars/**",
-            "/swagger-ui.html"};
+            "/swagger-ui.html"
+    };
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -57,35 +62,39 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors().and()
-
                 .authorizeHttpRequests(req -> req
-                        // Rotas públicas temporárias (projetos e tarefas)
-                        .requestMatchers("/projetos/**").permitAll()
-                        .requestMatchers("/tarefas/**").permitAll()
-
-                        // Rotas abertas (auth, swagger, usuários)
-                        .requestMatchers("/usuarios/**").permitAll()
-                        .requestMatchers("/auth/authenticate").permitAll()
-                        .requestMatchers("/auth/logout").permitAll()
+                        // URLs públicas
+                        .requestMatchers("/auth/**", "/usuarios/**").permitAll()
                         .requestMatchers(WHITE_LIST_URL).permitAll()
 
-                        // Qualquer outra rota requer autenticação
+                        // ✅ Permissões detalhadas para tarefas
+                        .requestMatchers(POST, "/tarefas/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
+                        .requestMatchers(GET, "/tarefas/**").hasAnyAuthority(USUARIO_READ.name(), ADMIN_CREATE.name())
+                        .requestMatchers(PUT, "/tarefas/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_CREATE.name())
+                        .requestMatchers(DELETE, "/tarefas/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_CREATE.name())
+
+                        // ✅ Permissões detalhadas para projetos
+                        .requestMatchers(POST, "/projetos/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
+                        .requestMatchers(GET, "/projetos/**").hasAnyAuthority(USUARIO_READ.name(), ADMIN_CREATE.name())
+                        .requestMatchers(PUT, "/projetos/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_CREATE.name())
+                        .requestMatchers(DELETE, "/projetos/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_CREATE.name())
+
+                        // qualquer outra requisição precisa estar autenticada
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(
-                        org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .addLogoutHandler(logoutHandler)
-                        .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+                        .logoutSuccessHandler((req, res, auth) -> SecurityContextHolder.clearContext())
                 );
-        
+
         return http.build();
     }
 }

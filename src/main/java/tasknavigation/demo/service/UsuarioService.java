@@ -1,18 +1,15 @@
 package tasknavigation.demo.service;
 
-import java.util.Optional;
 import java.util.List;
-import java.util.UUID;
-import java.time.LocalDateTime;
+import java.util.Optional;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.repository.UsuarioRepository;
-
-import java.sql.CallableStatement;
 
 @Service
 public class UsuarioService {
@@ -23,10 +20,10 @@ public class UsuarioService {
     private final EmailService emailService;
 
     public UsuarioService(
-        PasswordEncoder passwordEncoder,
-        UsuarioRepository usuarioRepository,
-        JdbcTemplate jdbcTemplate,
-        EmailService emailService
+            PasswordEncoder passwordEncoder,
+            UsuarioRepository usuarioRepository,
+            JdbcTemplate jdbcTemplate,
+            EmailService emailService
     ) {
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
@@ -54,16 +51,14 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    // ✅ Novo método: busca usuários ativos por equipe
     public List<Usuario> buscarPorEquipe(Long equipeId) {
         return usuarioRepository.findByEquipeIdAndCodStatusTrue(equipeId);
     }
 
-    /*
-    public Usuario incluirUsuario(Usuario usuario) { ... }
-    public Usuario atualizaUsuario(Long id, Usuario usuario) { ... }
-    public void criarUsuarioViaProcedure(Usuario usuario, String origem) { ... }
-    public boolean confirmarEmail(String token) { ... }
-    private String gerarToken() { ... }
-    */
+    // 🔥 Pega o usuário logado pelo SecurityContext
+    public Usuario getUsuarioLogado() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário logado não encontrado"));
+    }
 }
