@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.persistence.EntityNotFoundException;
 import tasknavigation.demo.domain.Configuracao;
 import tasknavigation.demo.domain.Usuario;
@@ -52,7 +54,10 @@ public class ConfiguracaoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Configuracao> atualizarConfiguracao(
-            @PathVariable Long id,
+                @PathVariable Long id,
+    @RequestParam("fotoPerfil") MultipartFile foto,
+    @RequestParam("posicaoFoto") int posicao,
+    @RequestParam("usuario") Long usuarioId,
             @RequestBody Configuracao configuracaoAtualizado) {
 
         return configuracaoRepository.findById(id).map(configuracao -> {

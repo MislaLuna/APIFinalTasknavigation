@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -54,6 +53,9 @@ public class Usuario implements UserDetails {
     @Column(name = "codStatus")
     private String codStatus;
 
+    @Column(name = "foto", columnDefinition = "TEXT")
+    private String foto;
+
     @Transient
     private AuthenticationResponse authenticationResponse;
 
@@ -94,7 +96,6 @@ public class Usuario implements UserDetails {
     public NivelAcesso getNivelAcesso() {
         return nivelAcesso;
     }
-
     public void setNivelAcesso(NivelAcesso nivelAcesso) {
         this.nivelAcesso = nivelAcesso;
     }
@@ -111,17 +112,11 @@ public class Usuario implements UserDetails {
     public String getCodigoRecuperacao() { return codigoRecuperacao; }
     public void setCodigoRecuperacao(String codigoRecuperacao) { this.codigoRecuperacao = codigoRecuperacao; }
 
-    public LocalDateTime getCodigoExpiracao() {
-    return codigoExpiracao;
-}
-
-public void setCodigoExpiracao(LocalDateTime codigoExpiracao) {
-    this.codigoExpiracao = codigoExpiracao;
-}
+    public LocalDateTime getCodigoExpiracao() { return codigoExpiracao; }
+    public void setCodigoExpiracao(LocalDateTime codigoExpiracao) { this.codigoExpiracao = codigoExpiracao; }
 
     public Equipe getEquipe() { return equipe; }
     public void setEquipe(Equipe equipe ) { this.equipe = equipe; }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -129,50 +124,32 @@ public void setCodigoExpiracao(LocalDateTime codigoExpiracao) {
     }
 
     @Override
-    public String getPassword() {
-        return senha;
-    }
+    public String getPassword() { return senha; }
 
     @Override
-    public String getUsername() {
-        return email;
-    }
+    public String getUsername() { return email; }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 
-// Getter
-public String getCodStatus() {
-    return codStatus;
-}
+    // Getter e Setter de codStatus
+    public String getCodStatus() { return codStatus; }
+    public void setCodStatus(String codStatus) { this.codStatus = codStatus; }
 
-// Setter
-public void setCodStatus(String codStatus) {
-    this.codStatus = codStatus;
-}
+    public AuthenticationResponse getAuthenticationResponse() { return authenticationResponse; }
+    public void setAuthenticationResponse(AuthenticationResponse authenticationResponse) { this.authenticationResponse = authenticationResponse; }
 
-    public AuthenticationResponse getAuthenticationResponse() {
-        return authenticationResponse;
-    }
+    // Getter e Setter de foto
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
 
-    public void setAuthenticationResponse(AuthenticationResponse authenticationResponse) {
-        this.authenticationResponse = authenticationResponse;
-    }
 }
