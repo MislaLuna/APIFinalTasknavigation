@@ -40,24 +40,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String path = request.getRequestURI();
+        final String method = request.getMethod();
 
-        // ✅ Ignorar rotas públicas
-        if (path.startsWith("/auth/")
-                || (path.startsWith("/usuarios") && request.getMethod().equals("POST"))
-                || path.startsWith("/swagger")
-                || path.startsWith("/v3/api-docs")) {
+        // Preflight CORS
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Rotas públicas (não passam pelo parser de JWT)
+        if (isPublic(path, method)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response); // deixa passar, o Security decide
+            filterChain.doFilter(request, response);
             return;
         }
 
         final String token = authHeader.substring(7);
-        final String userEmail = jwtService.extractUsername(token);
+        String userEmail = null;
+
+        try {
+            userEmail = jwtService.extractUsername(token);
+        } catch (Exception ignored) {}
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             Usuario userDetails = (Usuario) this.userDetailsService.loadUserByUsername(userEmail);
@@ -66,14 +74,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(t -> !t.isExpired() && !t.isRevoked())
                     .orElse(false);
 
-            if (jwtService.isTokenValid(token, userDetails) && isTokenValid) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (isTokenValid) {
+                try {
+                    if (jwtService.isTokenValid(token, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                } catch (Exception ignored) {}
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublic(String path, String method) {
+        // Swagger / OpenAPI
+        if (path.startsWith("/swagger") || path.startsWith("/v3/api-docs") || path.startsWith("/webjars")
+                || "/swagger-ui.html".equals(path)) return true;
+
+        // Auth (se você tiver /auth/**)
+        if (path.startsWith("/auth/")) return true;
+
+        // Login e cadastro de usuários (sem token)
+        if ("/usuarios/login".equals(path) && "POST".equalsIgnoreCase(method)) return true;
+        if ("/usuarios".equals(path) && "POST".equalsIgnoreCase(method)) return true; // cadastro
+
+        // Fluxo de recuperação/validação de senha/email (sem token)
+        if (path.startsWith("/usuarios/enviar-codigo-recuperacao")) return true;
+        if (path.startsWith("/usuarios/verificar-codigo")) return true;
+        if (path.startsWith("/usuarios/redefinir-senha")) return true;
+        if (path.startsWith("/usuarios/confirmar-email")) return true;
+
+        // Raiz/saúde
+        if ("/".equals(path) || path.startsWith("/actuator")) return true;
+
+        return false;
     }
 }

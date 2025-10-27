@@ -27,6 +27,7 @@ public class SecurityConfiguration {
     private static final String[] WHITE_LIST_URL = {
             "/index",
             "/images/**",
+            "/error",
             "/v2/api-docs",
             "/v3/api-docs",
             "/v3/api-docs/**",
@@ -60,40 +61,53 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors().and()
-                .authorizeHttpRequests(req -> req
-                        // URLs públicas
-                        .requestMatchers("/auth/**", "/usuarios/**").permitAll()
-                        .requestMatchers(WHITE_LIST_URL).permitAll()
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> {}) // usa CorsConfigurationSource se houver
+            .authorizeHttpRequests(req -> req
+                    // Preflight CORS
+                    .requestMatchers(OPTIONS, "/**").permitAll()
 
-                        // ✅ Permissões detalhadas para tarefas
-                        .requestMatchers(POST, "/tarefas/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
-                        .requestMatchers(GET, "/tarefas/**").hasAnyAuthority(USUARIO_READ.name(), ADMIN_CREATE.name())
-                        .requestMatchers(PUT, "/tarefas/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_CREATE.name())
-                        .requestMatchers(DELETE, "/tarefas/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_CREATE.name())
+                    // Públicas (sem token)
+                    .requestMatchers(WHITE_LIST_URL).permitAll()
+                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers(POST, "/usuarios/login").permitAll()
+                    .requestMatchers(POST, "/usuarios").permitAll()
+                    .requestMatchers(POST, "/usuarios/enviar-codigo-recuperacao").permitAll()
+                    .requestMatchers(POST, "/usuarios/verificar-codigo").permitAll()
+                    .requestMatchers(POST, "/usuarios/redefinir-senha").permitAll()
+                    .requestMatchers(GET,  "/usuarios/confirmar-email").permitAll()
 
-                        // ✅ Permissões detalhadas para projetos
-                        .requestMatchers(POST, "/projetos/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
-                        .requestMatchers(GET, "/projetos/**").hasAnyAuthority(USUARIO_READ.name(), ADMIN_CREATE.name())
-                        .requestMatchers(PUT, "/projetos/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_CREATE.name())
-                        .requestMatchers(DELETE, "/projetos/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_CREATE.name())
+                    // Configuração: exige estar autenticado (sem granularidade de permissões aqui)
+                    .requestMatchers(GET, "/configuracao/**").authenticated()
+                    .requestMatchers(PUT, "/configuracao/**").authenticated()
 
-                        // qualquer outra requisição precisa estar autenticada
-                        .anyRequest().authenticated()
-                )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
-                        .addLogoutHandler(logoutHandler)
-                        .logoutSuccessHandler((req, res, auth) -> SecurityContextHolder.clearContext())
-                );
+                    // Tarefas
+                    .requestMatchers(POST,   "/tarefas/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
+                    .requestMatchers(GET,    "/tarefas/**").hasAnyAuthority(USUARIO_READ.name(),   ADMIN_READ.name(), ADMIN_CREATE.name())
+                    .requestMatchers(PUT,    "/tarefas/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_UPDATE.name(), ADMIN_CREATE.name())
+                    .requestMatchers(DELETE, "/tarefas/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_DELETE.name(), ADMIN_CREATE.name())
+
+                    // Projetos
+                    .requestMatchers(POST,   "/projetos/**").hasAnyAuthority(USUARIO_CREATE.name(), ADMIN_CREATE.name())
+                    .requestMatchers(GET,    "/projetos/**").hasAnyAuthority(USUARIO_READ.name(),   ADMIN_READ.name(), ADMIN_CREATE.name())
+                    .requestMatchers(PUT,    "/projetos/**").hasAnyAuthority(USUARIO_UPDATE.name(), ADMIN_UPDATE.name(), ADMIN_CREATE.name())
+                    .requestMatchers(DELETE, "/projetos/**").hasAnyAuthority(USUARIO_DELETE.name(), ADMIN_DELETE.name(), ADMIN_CREATE.name())
+
+                    // Demais rotas: autenticadas
+                    .anyRequest().authenticated()
+            )
+            .exceptionHandling(exception -> exception
+                    .authenticationEntryPoint(customAuthenticationEntryPoint)
+                    .accessDeniedHandler(customAccessDeniedHandler)
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .logout(logout -> logout
+                    .logoutUrl("/auth/logout")
+                    .addLogoutHandler(logoutHandler)
+                    .logoutSuccessHandler((req, res, auth) -> SecurityContextHolder.clearContext())
+            );
 
         return http.build();
     }

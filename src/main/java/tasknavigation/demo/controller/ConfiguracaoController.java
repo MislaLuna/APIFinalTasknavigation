@@ -1,33 +1,22 @@
 package tasknavigation.demo.controller;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.persistence.EntityNotFoundException;
 import tasknavigation.demo.domain.Configuracao;
-import tasknavigation.demo.domain.Usuario;
-import tasknavigation.demo.repository.ConfiguracaoRepository;
-import tasknavigation.demo.repository.UsuarioRepository;
 import tasknavigation.demo.service.ConfiguracaoService;
 
 @RestController
 @RequestMapping("/configuracao")
 public class ConfiguracaoController {
 
-    private final ConfiguracaoRepository configuracaoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final ConfiguracaoService service;
 
-    @Autowired
-    private ConfiguracaoService service;
-
-    @Autowired
-    public ConfiguracaoController(ConfiguracaoRepository configuracaoRepository, UsuarioRepository usuarioRepository) {
-        this.configuracaoRepository = configuracaoRepository;
-        this.usuarioRepository = usuarioRepository;
+    public ConfiguracaoController(ConfiguracaoService service) {
+        this.service = service;
     }
 
     @GetMapping
@@ -35,62 +24,36 @@ public class ConfiguracaoController {
         return ResponseEntity.ok(service.listarConfiguracao());
     }
 
-    @PostMapping
-    public ResponseEntity<Configuracao> criarConfiguracao(@RequestBody Configuracao configuracao) {
-        try {
-            Configuracao novaConfiguracao = configuracaoRepository.save(configuracao);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novaConfiguracao);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+    /**
+     * Busca a configuração pelo ID do usuário. Se não existir, cria default e retorna 200.
+     */
+    @GetMapping("/{usuarioId}")
+    public ResponseEntity<Configuracao> buscarPorUsuario(@PathVariable Long usuarioId) {
+        Configuracao cfg = service.getOrCreateByUsuarioId(usuarioId);
+        return ResponseEntity.ok(cfg);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Configuracao> buscarConfiguracao(@PathVariable Long id) {
-        return configuracaoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    /**
+     * Upsert: atualiza se existir, cria se não existir, recebendo JSON.
+     * Body esperado (exemplo):
+     * {
+     *   "tema": "escuro",
+     *   "notificacoes": true,
+     *   "fotoPerfil": "data:image/jpeg;base64,...",
+     *   "posicaoFoto": 2
+     * }
+     */
+    @PutMapping("/{usuarioId}")
+    public ResponseEntity<Configuracao> atualizarPorUsuario(@PathVariable Long usuarioId,
+                                                            @RequestBody Configuracao body) {
+        Configuracao salvo = service.upsertByUsuarioId(usuarioId, body);
+        return ResponseEntity.ok(salvo);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Configuracao> atualizarConfiguracao(
-                @PathVariable Long id,
-    @RequestParam("fotoPerfil") MultipartFile foto,
-    @RequestParam("posicaoFoto") int posicao,
-    @RequestParam("usuario") Long usuarioId,
-            @RequestBody Configuracao configuracaoAtualizado) {
-
-        return configuracaoRepository.findById(id).map(configuracao -> {
-            configuracao.setFotoPerfil(configuracaoAtualizado.getFotoPerfil());
-            configuracao.setNotificacoes(configuracaoAtualizado.getNotificacoes());
-            configuracao.setTema(configuracaoAtualizado.getTema());
-
-            if (configuracaoAtualizado.getUsuario() != null &&
-                configuracaoAtualizado.getUsuario().getId() != null) {
-                Usuario usuario = usuarioRepository.findById(configuracaoAtualizado.getUsuario().getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-                configuracao.setUsuario(usuario);
-            }
-
-            return ResponseEntity.ok(configuracaoRepository.save(configuracao));
-        }).orElseGet(() -> {
-            if (configuracaoAtualizado.getUsuario() != null &&
-                configuracaoAtualizado.getUsuario().getId() != null) {
-                Usuario usuario = usuarioRepository.findById(configuracaoAtualizado.getUsuario().getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
-                configuracaoAtualizado.setUsuario(usuario);
-            }
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(configuracaoRepository.save(configuracaoAtualizado));
-        });
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarConfiguracao(@PathVariable Long id) {
-        if (configuracaoRepository.existsById(id)) {
-            configuracaoRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    // (opcional) deletar por id da própria configuração
+    @DeleteMapping("/id/{idConfiguracao}")
+    public ResponseEntity<Void> deletarConfiguracao(@PathVariable Long idConfiguracao) {
+        service.deletar(idConfiguracao);
+        return ResponseEntity.noContent().build();
     }
 }

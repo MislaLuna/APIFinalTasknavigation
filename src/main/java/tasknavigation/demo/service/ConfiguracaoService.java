@@ -1,13 +1,13 @@
 package tasknavigation.demo.service;
 
 import org.springframework.stereotype.Service;
-import java.util.List;
-
-import jakarta.annotation.PostConstruct; // opcional
+import org.springframework.transaction.annotation.Transactional;
 import tasknavigation.demo.domain.Configuracao;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.repository.ConfiguracaoRepository;
 import tasknavigation.demo.repository.UsuarioRepository;
+
+import java.util.List;
 
 @Service
 public class ConfiguracaoService {
@@ -25,40 +25,52 @@ public class ConfiguracaoService {
         return configuracaoRepository.findAll();
     }
 
-    public Configuracao salvar(Configuracao configuracao) {
-        return configuracaoRepository.save(configuracao);
+    @Transactional(readOnly = true)
+    public Configuracao getOrCreateByUsuarioId(Long usuarioId) {
+        return configuracaoRepository.findByUsuario_Id(usuarioId)
+                .orElseGet(() -> criarDefaultESalvar(usuarioId));
     }
 
-    public Configuracao buscarPorId(Long id) {
-        return configuracaoRepository.findById(id).orElse(null);
+    @Transactional
+    public Configuracao upsertByUsuarioId(Long usuarioId, Configuracao entrada) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
+
+        Configuracao cfg = configuracaoRepository.findByUsuario_Id(usuarioId)
+                .orElseGet(() -> {
+                    Configuracao c = new Configuracao();
+                    c.setUsuario(usuario);
+                    c.setTema("claro");
+                    c.setNotificacoes(true);
+                    c.setPosicaoFoto(1);
+                    c.setFotoPerfil(null);
+                    return c;
+                });
+
+        // Atualiza apenas o que veio no corpo (evita NPE)
+        if (entrada.getTema() != null) cfg.setTema(entrada.getTema());
+        if (entrada.getNotificacoes() != null) cfg.setNotificacoes(entrada.getNotificacoes());
+        if (entrada.getFotoPerfil() != null) cfg.setFotoPerfil(entrada.getFotoPerfil());
+        if (entrada.getPosicaoFoto() != null) cfg.setPosicaoFoto(entrada.getPosicaoFoto());
+
+        cfg.setUsuario(usuario);
+        return configuracaoRepository.save(cfg);
+    }
+
+    private Configuracao criarDefaultESalvar(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + usuarioId));
+
+        Configuracao config = new Configuracao();
+        config.setUsuario(usuario);
+        config.setFotoPerfil(null);
+        config.setTema("claro");
+        config.setNotificacoes(true);
+        config.setPosicaoFoto(1);
+        return configuracaoRepository.save(config);
     }
 
     public void deletar(Long id) {
         configuracaoRepository.deleteById(id);
-    }
-
-    // 🔥 Método para criar configuração padrão para um usuário
-    public Configuracao criarConfiguracaoPadraoParaUsuario(Usuario usuario) {
-        // Verifica se já existe
-        Configuracao existente = configuracaoRepository.findByUsuarioId(usuario.getId());
-        if (existente != null) return existente;
-
-        // Cria configuração padrão
-        Configuracao config = new Configuracao();
-        config.setUsuario(usuario);
-        config.setFotoPerfil(null);      // sem foto
-        config.setTema("claro");         // padrão
-        config.setNotificacoes(true);    // padrão
-        return configuracaoRepository.save(config);
-    }
-
-    // Opcional: criar configurações para todos os usuários que ainda não têm
-    @PostConstruct
-    public void criarConfiguracoesPadrao() {
-        List<Usuario> usuarios = usuarioRepository.findAll();
-        for (Usuario u : usuarios) {
-            criarConfiguracaoPadraoParaUsuario(u);
-        }
-        System.out.println("Configurações padrão criadas para usuários existentes.");
     }
 }

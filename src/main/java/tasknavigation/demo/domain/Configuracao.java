@@ -20,6 +20,9 @@ public class Configuracao {
     @Column(name = "foto_perfil")
     private String fotoPerfil;
 
+    @Column(name = "posicao_foto")
+    private Integer posicaoFoto; // 👈 adicionado para casar com o front
+
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_usuario", unique = true, nullable = false)  // FK - id_usuario
     private Usuario usuario;
@@ -55,6 +58,14 @@ public class Configuracao {
 
     public void setFotoPerfil(String fotoPerfil) {
         this.fotoPerfil = fotoPerfil;
+    }
+
+    public Integer getPosicaoFoto() {
+        return posicaoFoto;
+    }
+
+    public void setPosicaoFoto(Integer posicaoFoto) {
+        this.posicaoFoto = posicaoFoto;
     }
 
     public Usuario getUsuario() {
