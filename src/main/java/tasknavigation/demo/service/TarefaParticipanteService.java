@@ -45,7 +45,7 @@ public class TarefaParticipanteService {
     }
 
     public List<TarefaParticipante> listarPorTarefa(Long idTarefa) {
-        return tarefaParticipanteRepository.findByTarefaId(idTarefa);
+        return tarefaParticipanteRepository.findByTarefaIdTarefa(idTarefa);
     }
 
     public TarefaParticipante salvar(TarefaParticipante tarefaParticipante) {

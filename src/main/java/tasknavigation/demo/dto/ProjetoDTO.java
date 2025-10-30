@@ -10,7 +10,7 @@ public class ProjetoDTO {
 
     // Getters e Setters
     public String getNome() {
-        return nome;
+        return nome;    
     }
 
     public void setNome(String nome) {

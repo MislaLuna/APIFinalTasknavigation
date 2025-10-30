@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import tasknavigation.demo.domain.Tarefa;
 import tasknavigation.demo.domain.TarefaParticipante;
 import tasknavigation.demo.domain.Usuario;
+import tasknavigation.demo.dto.TarefaParticipanteDTO;
 import tasknavigation.demo.service.TarefaParticipanteService;
 
 import java.time.LocalDateTime;
@@ -23,24 +24,27 @@ public class TarefaParticipanteController {
         this.tarefaParticipanteService = tarefaParticipanteService;
     }
 
-    // 🔹 Listar todos
+    // 🔹 Listar todos com DTO
     @GetMapping
-    public List<TarefaParticipante> listar() {
-        return tarefaParticipanteService.listarTodos();
+    public List<TarefaParticipanteDTO> listar() {
+        return tarefaParticipanteService.listarTodos()
+            .stream()
+            .map(TarefaParticipanteDTO::new)
+            .toList();
     }
 
-    // 🔹 Buscar por ID
+    // 🔹 Buscar por ID com DTO
     @GetMapping("/{id}")
-    public ResponseEntity<TarefaParticipante> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<TarefaParticipanteDTO> buscarPorId(@PathVariable Long id) {
         try {
             TarefaParticipante tp = tarefaParticipanteService.buscarPorId(id);
-            return ResponseEntity.ok(tp);
+            return ResponseEntity.ok(new TarefaParticipanteDTO(tp));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // 🔹 Listar por usuário (para o app mobile)
+    // 🔹 Listar por usuário (mantém retorno completo para o app)
     @GetMapping("/usuario/{idUsuario}")
     public List<TarefaParticipante> listarPorUsuario(@PathVariable Long idUsuario) {
         return tarefaParticipanteService.listarPorUsuario(idUsuario);
@@ -50,7 +54,6 @@ public class TarefaParticipanteController {
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody TarefaParticipante tp) {
         try {
-            // Busca as entidades reais
             Tarefa tarefa = tarefaParticipanteService.buscarTarefaPorId(tp.getTarefa().getIdTarefa());
             Usuario usuario = tarefaParticipanteService.buscarUsuarioPorId(tp.getUsuario().getId());
 
