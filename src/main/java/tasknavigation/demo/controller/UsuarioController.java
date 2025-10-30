@@ -24,11 +24,11 @@
         @RestController
         @RequestMapping("/usuarios")
         @CrossOrigin(origins = {
-            "http://localhost:61759",  // Flutter Web
-            "http://localhost:5173",   
-            "http://172.19.0.146:8080",    
-            "http://172.19.0.109:8080"
-        })
+     "http://localhost:5500",   // Flutter Web (quando roda com flutter run)
+    "http://localhost:5173",   // Painel admin (React/Vite)
+    "http://127.0.0.1:5500",   // Live Server
+    "http://172.19.0.109:5500" // Mobile Screen Extension acessando pelo IP local
+})
         public class UsuarioController {
 
             @Autowired

@@ -17,8 +17,9 @@ public class CorsConfig {
  
         // 🔹 Permitir front web e mobile (qualquer porta local)
         config.setAllowedOriginPatterns(List.of(    
-            "http://localhost:*",       // Qualquer porta do localhost
-            "http://172.19.1.66:*"      // Flutter mobile, qualquer porta
+            "http://localhost:*",        // Qualquer porta local
+            "http://127.0.0.1:*",        // Live Server (extensão VS Code)
+            "http://172.19.*.*:*"        // Qualquer IP interno da sua rede
         ));
  
         // 🔹 Métodos HTTP permitidos

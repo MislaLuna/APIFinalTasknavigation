@@ -40,68 +40,82 @@ public class TarefaController {
                      .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Criar nova tarefa
-    @PostMapping
-    public ResponseEntity<?> criar(@RequestBody TarefaDTO dto) {
+ // Criar nova tarefa
+@PostMapping
+public ResponseEntity<?> criar(@RequestBody TarefaDTO dto) {
 
-        //System.out.println("USUARIO ID " + dto.getIdUsuario() );
-        // Pega o usuário logado, caso não venha no DTO
-        Usuario usuario = (dto.getIdUsuario() != null)
-                ? tarefaService.buscarUsuarioPorId(dto.getIdUsuario())
-                : usuarioService.getUsuarioLogado();
-
-        if (usuario == null) {
-            return ResponseEntity.badRequest().body("Usuário não encontrado.");
+    // Pega o usuário selecionado, se válido; caso contrário, usa o logado
+    Usuario usuario = null;
+    if(dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
+        usuario = tarefaService.buscarUsuarioPorId(dto.getIdUsuario());
+        if(usuario == null) {
+            return ResponseEntity.badRequest().body("Usuário selecionado não encontrado.");
         }
-
-        Tarefa tarefa = new Tarefa();
-        tarefa.setTitulo(dto.getTitulo() != null ? dto.getTitulo() : "Título da Tarefa");
-        tarefa.setDescricao(dto.getDescricao() != null ? dto.getDescricao() : "Descrição da Tarefa");
-        tarefa.setPrazo(dto.getPrazo() != null ? dto.getPrazo() : LocalDate.now().plusDays(7));
-        tarefa.setStatus(dto.getStatus() != null ? dto.getStatus() : "Pendente");
-        tarefa.setPrioridade(dto.getPrioridade() != null ? dto.getPrioridade() : "Média");
-        tarefa.setUsuario(usuario);
-
-        if (dto.getIdProjeto() != null) {
-            Projeto projeto = tarefaService.buscarProjetoPorId(dto.getIdProjeto());
-            if (projeto != null) {
-                tarefa.setProjeto(projeto);
-            }
+    } else {
+        usuario = usuarioService.getUsuarioLogado();
+        if(usuario == null) {
+            return ResponseEntity.badRequest().body("Usuário logado não encontrado.");
         }
-
-        return ResponseEntity.ok(tarefaService.salvar(tarefa));
     }
 
-    // Atualizar tarefa existente
-    @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody TarefaDTO dto) {
-        Optional<Tarefa> tarefaOpt = tarefaService.buscarPorId(id);
-        if (!tarefaOpt.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
+    Tarefa tarefa = new Tarefa();
+    tarefa.setTitulo(dto.getTitulo() != null ? dto.getTitulo() : "Título da Tarefa");
+    tarefa.setDescricao(dto.getDescricao() != null ? dto.getDescricao() : "Descrição da Tarefa");
+    tarefa.setPrazo(dto.getPrazo() != null ? dto.getPrazo() : LocalDate.now().plusDays(7));
+    tarefa.setStatus(dto.getStatus() != null ? dto.getStatus() : "Pendente");
+    tarefa.setPrioridade(dto.getPrioridade() != null ? dto.getPrioridade() : "Média");
+    tarefa.setUsuario(usuario);
 
-        Tarefa tarefa = tarefaOpt.get();
-        tarefa.setTitulo(dto.getTitulo());
-        tarefa.setDescricao(dto.getDescricao());
-        tarefa.setPrazo(dto.getPrazo());
-        tarefa.setStatus(dto.getStatus());
-        tarefa.setPrioridade(dto.getPrioridade());
-
-        // Atualiza usuário
-        Usuario usuario = (dto.getIdUsuario() != null)
-                ? tarefaService.buscarUsuarioPorId(dto.getIdUsuario())
-                : usuarioService.getUsuarioLogado();
-        tarefa.setUsuario(usuario);
-
-        // Atualiza projeto
-        if (dto.getIdProjeto() != null) {
-            Projeto projeto = tarefaService.buscarProjetoPorId(dto.getIdProjeto());
+    if (dto.getIdProjeto() != null && dto.getIdProjeto() > 0) {
+        Projeto projeto = tarefaService.buscarProjetoPorId(dto.getIdProjeto());
+        if (projeto != null) {
             tarefa.setProjeto(projeto);
         }
-
-        return ResponseEntity.ok(tarefaService.salvar(tarefa));
     }
 
+    return ResponseEntity.ok(tarefaService.salvar(tarefa));
+}
+
+// Atualizar tarefa existente
+@PutMapping("/{id}")
+public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody TarefaDTO dto) {
+    Optional<Tarefa> tarefaOpt = tarefaService.buscarPorId(id);
+    if (!tarefaOpt.isPresent()) {
+        return ResponseEntity.notFound().build();
+    }
+
+    Tarefa tarefa = tarefaOpt.get();
+    tarefa.setTitulo(dto.getTitulo());
+    tarefa.setDescricao(dto.getDescricao());
+    tarefa.setPrazo(dto.getPrazo());
+    tarefa.setStatus(dto.getStatus());
+    tarefa.setPrioridade(dto.getPrioridade());
+
+    // Atualiza usuário
+    Usuario usuario = null;
+    if(dto.getIdUsuario() != null && dto.getIdUsuario() > 0) {
+        usuario = tarefaService.buscarUsuarioPorId(dto.getIdUsuario());
+        if(usuario == null) {
+            return ResponseEntity.badRequest().body("Usuário selecionado não encontrado.");
+        }
+    } else {
+        usuario = usuarioService.getUsuarioLogado();
+        if(usuario == null) {
+            return ResponseEntity.badRequest().body("Usuário logado não encontrado.");
+        }
+    }
+    tarefa.setUsuario(usuario);
+
+    // Atualiza projeto
+    if (dto.getIdProjeto() != null && dto.getIdProjeto() > 0) {
+        Projeto projeto = tarefaService.buscarProjetoPorId(dto.getIdProjeto());
+        if (projeto != null) {  
+            tarefa.setProjeto(projeto);
+        }
+    }
+
+    return ResponseEntity.ok(tarefaService.salvar(tarefa));
+}
     // Deletar tarefa por ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {

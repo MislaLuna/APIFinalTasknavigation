@@ -75,12 +75,17 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        if (userDetails instanceof Usuario usuario) {
-            extraClaims.put("nivelAcesso", usuario.getNivelAcesso().name());
-            extraClaims.put("id", usuario.getId());
-        }
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+    if (userDetails instanceof Usuario usuario) {
+        extraClaims.put("nivelAcesso", usuario.getNivelAcesso().name());
+        extraClaims.put("id", usuario.getId());
+        // ✅ Adiciona authorities para o Spring Security
+        extraClaims.put("authorities", usuario.getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .toList());
     }
+    return buildToken(extraClaims, userDetails, jwtExpiration);
+}
 
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails, refreshExpiration);
