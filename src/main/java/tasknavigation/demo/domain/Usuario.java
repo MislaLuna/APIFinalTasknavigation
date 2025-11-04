@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import tasknavigation.demo.auth.AuthenticationResponse;
@@ -56,17 +57,27 @@ public class Usuario implements UserDetails {
     @Column(name = "foto", columnDefinition = "TEXT")
     private String foto;
 
-    
     @Transient
     private AuthenticationResponse authenticationResponse;
 
-    // Relacionamento com equipe
+    // ===========================================================
+    // 🔹 Relacionamento com equipe
+    // ===========================================================
     @ManyToOne
     @JoinColumn(name = "equipe_id")
     @JsonBackReference
     private Equipe equipe;
 
-    // Construtores
+    // ===========================================================
+    // 🔹 Relacionamento com Configuração
+    // ===========================================================
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Configuracao configuracao;
+
+    // ===========================================================
+    // 🔹 Construtores
+    // ===========================================================
     public Usuario() {}
 
     public Usuario(String nome, String email, String senha, LocalDate dataRegistro, NivelAcesso nivelAcesso) {
@@ -78,7 +89,9 @@ public class Usuario implements UserDetails {
         this.emailConfirmado = false;
     }
 
-    // Getters e Setters
+    // ===========================================================
+    // 🔹 Getters e Setters
+    // ===========================================================
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -94,12 +107,8 @@ public class Usuario implements UserDetails {
     public LocalDate getDataRegistro() { return dataRegistro; }
     public void setDataRegistro(LocalDate dataRegistro) { this.dataRegistro = dataRegistro; }
 
-    public NivelAcesso getNivelAcesso() {
-        return nivelAcesso;
-    }
-    public void setNivelAcesso(NivelAcesso nivelAcesso) {
-        this.nivelAcesso = nivelAcesso;
-    }
+    public NivelAcesso getNivelAcesso() { return nivelAcesso; }
+    public void setNivelAcesso(NivelAcesso nivelAcesso) { this.nivelAcesso = nivelAcesso; }
 
     public Boolean getEmailConfirmado() { return emailConfirmado; }
     public void setEmailConfirmado(Boolean emailConfirmado) { this.emailConfirmado = emailConfirmado; }
@@ -117,8 +126,31 @@ public class Usuario implements UserDetails {
     public void setCodigoExpiracao(LocalDateTime codigoExpiracao) { this.codigoExpiracao = codigoExpiracao; }
 
     public Equipe getEquipe() { return equipe; }
-    public void setEquipe(Equipe equipe ) { this.equipe = equipe; }
+    public void setEquipe(Equipe equipe) { this.equipe = equipe; }
 
+    public String getCodStatus() { return codStatus; }
+    public void setCodStatus(String codStatus) { this.codStatus = codStatus; }
+
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
+
+    public AuthenticationResponse getAuthenticationResponse() { return authenticationResponse; }
+    public void setAuthenticationResponse(AuthenticationResponse authenticationResponse) { this.authenticationResponse = authenticationResponse; }
+
+    // ===========================================================
+    // 🔹 Getters e Setters de Configuração
+    // ===========================================================
+    public Configuracao getConfiguracao() { return configuracao; }
+    public void setConfiguracao(Configuracao configuracao) {
+        this.configuracao = configuracao;
+        if (configuracao != null) {
+            configuracao.setUsuario(this);
+        }
+    }
+
+    // ===========================================================
+    // 🔹 Métodos da interface UserDetails
+    // ===========================================================
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return nivelAcesso.getAuthorities();
@@ -141,16 +173,4 @@ public class Usuario implements UserDetails {
 
     @Override
     public boolean isEnabled() { return true; }
-
-    // Getter e Setter de codStatus
-    public String getCodStatus() { return codStatus; }
-    public void setCodStatus(String codStatus) { this.codStatus = codStatus; }
-
-    public AuthenticationResponse getAuthenticationResponse() { return authenticationResponse; }
-    public void setAuthenticationResponse(AuthenticationResponse authenticationResponse) { this.authenticationResponse = authenticationResponse; }
-
-    // Getter e Setter de foto
-    public String getFoto() { return foto; }
-    public void setFoto(String foto) { this.foto = foto; }
-
 }

@@ -6,14 +6,13 @@ import java.util.Optional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import tasknavigation.demo.domain.Configuracao;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.repository.ConfiguracaoRepository;
 import tasknavigation.demo.repository.UsuarioRepository;
-import tasknavigation.demo.jwt.JwtService;
-
 
 @Service
 public class UsuarioService {
@@ -27,32 +26,71 @@ public class UsuarioService {
     public UsuarioService(
             PasswordEncoder passwordEncoder,
             UsuarioRepository usuarioRepository,
-            ConfiguracaoRepository configuracaoRepository, // ✅ injetar
+            ConfiguracaoRepository configuracaoRepository,
             JdbcTemplate jdbcTemplate,
             EmailService emailService
     ) {
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
-        this.configuracaoRepository = configuracaoRepository; // ✅ salvar
+        this.configuracaoRepository = configuracaoRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.emailService = emailService;
     }
 
-    public Usuario salvar(Usuario usuario) {
-        // Salva o usuário
-        Usuario novoUsuario = usuarioRepository.save(usuario);
+    // ============================================================
+    // 🔹 SALVAR ou ATUALIZAR USUÁRIO + CONFIGURAÇÃO
+    // ============================================================
+  @Transactional
+public Usuario salvar(Usuario usuario) {
+    Usuario novoUsuario = usuarioRepository.save(usuario);
 
-        // 🔥 Cria configuração padrão
-        Configuracao config = new Configuracao();
-        config.setUsuario(novoUsuario);
-        config.setFotoPerfil(null);       // sem foto
-        config.setTema("claro");          // padrão
-        config.setNotificacoes(true);     // padrão
-        configuracaoRepository.save(config);
+    // Busca configuração existente
+    Optional<Configuracao> configExistenteOpt = configuracaoRepository.findByUsuario_Id(novoUsuario.getId());
 
-        return novoUsuario;
+    if (usuario.getConfiguracao() != null) {
+        Configuracao novaConfig = usuario.getConfiguracao();
+
+        if (configExistenteOpt.isPresent()) {
+            Configuracao configExistente = configExistenteOpt.get();
+            configExistente.setTema(novaConfig.getTema());
+            configExistente.setFotoPerfil(novaConfig.getFotoPerfil());
+            configExistente.setPosicaoFoto(novaConfig.getPosicaoFoto());
+            configExistente.setNotificacoes(novaConfig.getNotificacoes());
+            configuracaoRepository.save(configExistente);
+        } else {
+            // Cria nova configuração apenas se não existir
+            novaConfig.setUsuario(novoUsuario);
+            configuracaoRepository.save(novaConfig);
+        }
+    } else {
+        // Se não veio configuração, cria padrão somente se não existir
+        if (configExistenteOpt.isEmpty()) {
+            Configuracao config = new Configuracao();
+            config.setUsuario(novoUsuario);
+            config.setTema("claro");
+            config.setFotoPerfil(null);
+            config.setPosicaoFoto(1);
+            config.setNotificacoes(true);
+            configuracaoRepository.save(config);
+        }
     }
 
+    return novoUsuario;
+}
+
+
+
+@Transactional
+public Usuario salvarSemAlterarConfiguracao(Usuario usuario) {
+    // Garante que não há referência à configuração (evita cascade persist)
+    usuario.setConfiguracao(null);
+    return usuarioRepository.save(usuario);
+}
+
+
+    // ============================================================
+    // 🔹 LISTAGENS E BUSCAS
+    // ============================================================
     public List<Usuario> listarUsuario() {
         return usuarioRepository.findAll();
     }
@@ -69,13 +107,13 @@ public class UsuarioService {
         return usuarioRepository.findById(id);
     }
 
-
-
     public List<Usuario> buscarPorEquipe(Long equipeId) {
         return usuarioRepository.findByEquipeIdAndCodStatusTrue(equipeId);
     }
 
-    // 🔥 Pega o usuário logado pelo SecurityContext
+    // ============================================================
+    // 🔹 PEGAR USUÁRIO LOGADO
+    // ============================================================
     public Usuario getUsuarioLogado() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return usuarioRepository.findByEmail(email)
