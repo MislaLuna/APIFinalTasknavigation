@@ -27,7 +27,7 @@
      "http://localhost:5500",   // Flutter Web (quando roda com flutter run)
     "http://localhost:5173",   // Painel admin (React/Vite)
     "http://127.0.0.1:5500",   // Live Server
-    "http://172.19.0.109:5500" // Mobile Screen Extension acessando pelo IP local
+    "http://172.19.0.134:5500" // Mobile Screen Extension acessando pelo IP local
 })
         public class UsuarioController {
 

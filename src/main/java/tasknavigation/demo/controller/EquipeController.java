@@ -4,20 +4,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import tasknavigation.demo.domain.Equipe;
 import tasknavigation.demo.domain.Usuario;
 import tasknavigation.demo.domain.enums.NivelAcesso;
+import tasknavigation.demo.repository.EquipeRepository;
 import tasknavigation.demo.service.EmailService;
 import tasknavigation.demo.service.EquipeService;
 import tasknavigation.demo.service.UsuarioService;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/equipes")
@@ -31,6 +36,9 @@ public class EquipeController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private EquipeRepository equipeRepository;
 
     // 🔹 Gera código aleatório para convite
     private String gerarCodigoConvite() {
@@ -46,16 +54,25 @@ public class EquipeController {
         return ResponseEntity.ok(equipeService.buscarTodas());
     }
 
-    // 🔹 Criar nova equipe
-    @PostMapping
-    public ResponseEntity<?> criarEquipe(@RequestBody Equipe equipe) {
-        if (equipe.getNome() == null || equipe.getNome().isEmpty()) {
-            return ResponseEntity.badRequest().body("Nome da equipe é obrigatório");
-        }
-        equipe.setCodigoConvite(gerarCodigoConvite());
-        Equipe novaEquipe = equipeService.salvar(equipe);
-        return ResponseEntity.ok(novaEquipe);
+    // 🔹 Criar nova equipe (seta o criador com o usuário logado)
+@PostMapping
+public ResponseEntity<?> criarEquipe(@RequestBody Equipe equipe, @AuthenticationPrincipal Usuario usuarioLogado) {
+    if (equipe.getNome() == null || equipe.getNome().isEmpty()) {
+        return ResponseEntity.badRequest().body("Nome da equipe é obrigatório");
     }
+
+    // 🔹 Busca o usuário completo no banco
+    Usuario criador = usuarioService.buscarPorEmail(usuarioLogado.getEmail())
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    equipe.setCodigoConvite(gerarCodigoConvite());
+    equipe.setCriador(criador);
+
+    Equipe novaEquipe = equipeService.salvar(equipe);
+
+    return ResponseEntity.ok(novaEquipe);
+}
+
 
     // 🔹 Entrar na equipe usando código de convite
     @PostMapping("/entrar")
@@ -94,7 +111,21 @@ public class EquipeController {
         return ResponseEntity.ok(Map.of("equipe", equipeMap));
     }
 
-    // 🔹 Convidar colaborador para equipe (qualquer email)
+    // 🔹 Listar equipes do usuário logado (onde ele é o criador)
+@GetMapping("/minhas")
+public ResponseEntity<List<Equipe>> listarEquipesDoUsuario(@AuthenticationPrincipal Usuario usuario) {
+    List<Equipe> equipesCriadas = equipeRepository.findByCriadorId(usuario.getId());
+    List<Equipe> equipesParticipando = equipeRepository.findByUsuariosId(usuario.getId());
+
+    Set<Equipe> todasEquipes = new HashSet<>();
+    todasEquipes.addAll(equipesCriadas);
+    todasEquipes.addAll(equipesParticipando);
+
+    return ResponseEntity.ok(new ArrayList<>(todasEquipes));
+}
+
+
+    // 🔹 Convidar colaborador para equipe
     @PostMapping("/{id}/convidar")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USUARIO')")
     public ResponseEntity<?> convidarColaborador(

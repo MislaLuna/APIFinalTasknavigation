@@ -30,6 +30,9 @@ public class EquipeService {
         }
         return equipeRepository.save(equipe);
     }
+public List<Equipe> buscarPorCriador(Long idCriador) {
+    return equipeRepository.findByCriadorId(idCriador);
+}
 
     // Busca equipe pelo ID
     public Optional<Equipe> buscarPorId(Long id) {

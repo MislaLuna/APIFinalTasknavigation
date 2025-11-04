@@ -66,37 +66,101 @@ public class AuthenticationService {
     }
 
     public Usuario authenticate(AuthenticationRequest request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-        } catch (Exception e) {
-            throw new RuntimeException("Email ou Password incorreto");
-        }
-
-        var user = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        // Verifica se a conta está ativa somente se não for ADMIN
-        if (!user.getNivelAcesso().equals(NivelAcesso.ADMIN)) {
-            if (!"ATIVO".equals(user.getCodStatus())) {
-                throw new RuntimeException("Conta inativa, por favor procurar o administrador da conta");
-            }
-        }
-
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-        revokeAllUserTokens(user);
-        saveUserToken(user, jwtToken);
-
-        var authenticationResponse = new AuthenticationResponse(jwtToken, refreshToken);
-        user.setAuthenticationResponse(authenticationResponse);
-
-        return user;
+    // Tenta autenticar com email e senha
+    try {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getEmail(),
+                request.getPassword()
+            )
+        );
+    } catch (Exception e) {
+        throw new RuntimeException("Email ou senha incorretos");
     }
+
+    // Busca usuário exato pelo email
+    var user = repository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    // Verifica se a conta está ativa (apenas para usuários que não são ADMIN)
+    if (user.getNivelAcesso() != NivelAcesso.ADMIN && !"ATIVO".equals(user.getCodStatus())) {
+        throw new RuntimeException("Conta inativa, procure o administrador");
+    }
+
+    // Revoga tokens antigos antes de gerar novos
+    revokeAllUserTokens(user);
+
+    // Gera novos tokens
+    var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+
+    // Salva token novo
+    saveUserToken(user, jwtToken);
+
+    // Cria e adiciona resposta de autenticação
+    var authResponse = new AuthenticationResponse(jwtToken, refreshToken);
+    user.setAuthenticationResponse(authResponse);
+
+    return user;
+}
+
+
+
+
+
+
+
+
+
+public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
+    // Tenta autenticar
+    try {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getEmail(),
+                request.getPassword()
+            )
+        );
+    } catch (Exception e) {
+        throw new RuntimeException("Email ou senha incorretos");
+    }
+
+    var user = repository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    // 🔹 Bloqueia ADMIN no mobile
+    if (isMobile && user.getNivelAcesso() == NivelAcesso.ADMIN) {
+        throw new RuntimeException("Usuário ADMIN não pode acessar o app mobile");
+    }
+
+    // Apenas usuários não-ADMIN precisam estar ATIVOS
+    if (user.getNivelAcesso() != NivelAcesso.ADMIN && !"ATIVO".equals(user.getCodStatus())) {
+        throw new RuntimeException("Conta inativa, procure o administrador");
+    }
+
+    revokeAllUserTokens(user);
+
+    var jwtToken = jwtService.generateToken(user);
+    var refreshToken = jwtService.generateRefreshToken(user);
+    saveUserToken(user, jwtToken);
+
+    var authResponse = new AuthenticationResponse(jwtToken, refreshToken);
+    user.setAuthenticationResponse(authResponse);
+
+    return user;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
     private void saveUserToken(Usuario usuario, String jwtToken) {
         var token = new Token();

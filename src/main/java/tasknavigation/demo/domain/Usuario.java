@@ -56,6 +56,7 @@ public class Usuario implements UserDetails {
     @Column(name = "foto", columnDefinition = "TEXT")
     private String foto;
 
+    
     @Transient
     private AuthenticationResponse authenticationResponse;
 

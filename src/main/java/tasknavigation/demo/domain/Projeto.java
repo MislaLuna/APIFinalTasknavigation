@@ -21,10 +21,11 @@ public class Projeto {
     private String descricao;
     private LocalDate prazo;
 
-    @ManyToOne
-    @JsonIgnoreProperties({"projetos", "tarefas"}) // evita loop ao serializar usuário
-    @JoinColumn(name = "id_usuario")
-    private Usuario usuario;
+@ManyToOne
+@JsonIgnoreProperties({"projetos", "tarefas"})
+@JoinColumn(name = "id_usuario", referencedColumnName = "id_usuario")
+private Usuario usuario;
+
 
 @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
 @JsonIgnoreProperties("projeto") // já existente

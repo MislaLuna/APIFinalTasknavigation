@@ -19,6 +19,15 @@ public class Equipe {
     @Column(unique = true)
     private String codigoConvite;
 
+
+    
+@ManyToOne(fetch = FetchType.EAGER)
+@JoinColumn(name = "criador_id")
+private Usuario criador;
+
+
+
+
     @OneToMany(mappedBy = "equipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference // Evita loop na serialização JSON
     private List<Usuario> usuarios = new ArrayList<>();
@@ -29,6 +38,17 @@ public class Equipe {
         this.nome = nome;
         this.codigoConvite = codigoConvite;
     }
+public Usuario getCriador() {
+    return criador;
+}
+
+
+
+public void setCriador(Usuario criador) {
+    this.criador = criador;
+}
+
+
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
