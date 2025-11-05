@@ -132,62 +132,63 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Usuário não encontrado."));
 
         Usuario usuario = usuarioOpt.get();
-        if (!codigo.equalsIgnoreCase(usuario.getCodigoRecuperacao()))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Código inválido."));
-        if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now()))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Código expirado."));
+       if (codigo == null || codigo.isBlank()) {
+    return ResponseEntity.badRequest().body(Map.of("erro", "Código não informado."));
+}
+
+if (usuario.getCodigoRecuperacao() == null) {
+    return ResponseEntity.badRequest().body(Map.of("erro", "Nenhum código de recuperação foi gerado para este usuário."));
+}
+
+if (!codigo.equalsIgnoreCase(usuario.getCodigoRecuperacao())) {
+    return ResponseEntity.badRequest().body(Map.of("erro", "Código inválido."));
+}
+
+if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now())) {
+    return ResponseEntity.badRequest().body(Map.of("erro", "Código expirado."));
+}
 
         return ResponseEntity.ok(Map.of("success", true, "mensagem", "Código válido."));
     }
 
     /** Redefinir senha */
-    @PostMapping("/recuperar-senha")
-    public ResponseEntity<?> recuperarSenha(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String codigo = body.get("codigo");
-        String novaSenha = body.get("novaSenha");
+   /** Redefinir senha */
+@PostMapping("/recuperar-senha")
+public ResponseEntity<?> recuperarSenha(@RequestBody Map<String, String> body) {
+    String email = body.get("email");
+    String codigo = body.get("codigo");
+    String novaSenha = body.get("novaSenha");
 
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-        if (usuarioOpt.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Usuário não encontrado."));
+    Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
+    if (usuarioOpt.isEmpty())
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Usuário não encontrado."));
 
-        Usuario usuario = usuarioOpt.get();
+    Usuario usuario = usuarioOpt.get();
 
-        if (!codigo.equals(usuario.getCodigoRecuperacao()))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Código inválido."));
-        if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now()))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Código expirado."));
-
-        usuario.setSenha(passwordEncoder.encode(novaSenha));
-        usuario.setCodigoRecuperacao(null);
-        usuario.setCodigoExpiracao(null);
-        usuarioService.salvar(usuario);
-
-        return ResponseEntity.ok(Map.of("success", true, "mensagem", "Senha redefinida com sucesso!"));
+    if (codigo == null || codigo.isBlank()) {
+        return ResponseEntity.badRequest().body(Map.of("erro", "Código não informado."));
     }
 
-    /** Login com JWT seguro */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, Object> body) {
-        String email = (String) body.get("email");
-        String senha = (String) body.get("senha");
-        Boolean isWebLogin = (Boolean) body.getOrDefault("isWebLogin", false);
-
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorEmail(email);
-        if (usuarioOpt.isEmpty())
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("erro", "Usuário não encontrado."));
-
-        Usuario usuario = usuarioOpt.get();
-        if (!passwordEncoder.matches(senha, usuario.getSenha()))
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("erro", "Senha incorreta."));
-
-        if (!isWebLogin && usuario.getNivelAcesso() == NivelAcesso.ADMIN)
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("erro", "Acesso negado: apenas usuários USUARIO podem acessar pelo app móvel."));
-
-        usuario = authenticationService.authenticate(new AuthenticationRequest(email, senha));
-        return ResponseEntity.ok(new UsuarioResponse(usuario));
+    if (usuario.getCodigoRecuperacao() == null) {
+        return ResponseEntity.badRequest().body(Map.of("erro", "Nenhum código de recuperação foi gerado para este usuário."));
     }
+
+    if (!codigo.equalsIgnoreCase(usuario.getCodigoRecuperacao())) {
+        return ResponseEntity.badRequest().body(Map.of("erro", "Código inválido."));
+    }
+
+    if (usuario.getCodigoExpiracao() == null || usuario.getCodigoExpiracao().isBefore(LocalDateTime.now())) {
+        return ResponseEntity.badRequest().body(Map.of("erro", "Código expirado."));
+    }
+
+    usuario.setSenha(passwordEncoder.encode(novaSenha));
+    usuario.setCodigoRecuperacao(null);
+    usuario.setCodigoExpiracao(null);
+    usuarioService.salvar(usuario);
+
+    return ResponseEntity.ok(Map.of("success", true, "mensagem", "Senha redefinida com sucesso!"));
+}
+
 
     /** Listar usuários por equipe */
     @GetMapping("/equipe/{equipeId}")
