@@ -71,11 +71,12 @@ public class SecurityConfiguration {
                     .requestMatchers(WHITE_LIST_URL).permitAll()
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers(POST, "/usuarios/login").permitAll()
-                    .requestMatchers(POST, "/usuarios").permitAll()
-                    .requestMatchers(POST, "/usuarios/enviar-codigo-recuperacao").permitAll()
-                    .requestMatchers(POST, "/usuarios/verificar-codigo").permitAll()
-                    .requestMatchers(POST, "/usuarios/redefinir-senha").permitAll()
-                    .requestMatchers(GET,  "/usuarios/confirmar-email").permitAll()
+.requestMatchers(POST, "/usuarios").permitAll()
+.requestMatchers(POST, "/usuarios/enviar-codigo-recuperacao").permitAll()
+.requestMatchers(POST, "/usuarios/verificar-codigo").permitAll()
+.requestMatchers(POST, "/usuarios/recuperar-senha").permitAll() // ✅ Corrigido aqui
+.requestMatchers(GET,  "/usuarios/confirmar-email").permitAll()
+
 
                     // Configuração: exige estar autenticado (sem granularidade de permissões aqui)
                     .requestMatchers(GET, "/configuracao/**").authenticated()
