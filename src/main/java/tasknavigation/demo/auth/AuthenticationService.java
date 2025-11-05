@@ -20,6 +20,7 @@ import java.io.IOException;
 
 @Service
 public class AuthenticationService {
+
     private final UsuarioRepository repository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,6 +41,9 @@ public class AuthenticationService {
         this.authenticationManager = authenticationManager;
     }
 
+    // ==============================
+    // MÉTODO DE REGISTRO
+    // ==============================
     public Usuario register(RegisterRequest request) {
         var usuarioDb = repository.findByEmail(request.getEmail());
         if (usuarioDb.isPresent()) {
@@ -59,67 +63,54 @@ public class AuthenticationService {
         var refreshToken = jwtService.generateRefreshToken(savedUser);
         saveUserToken(savedUser, jwtToken);
 
-        var authenticationResponse = new AuthenticationResponse(jwtToken, refreshToken);
+        var authenticationResponse = new AuthenticationResponse(jwtToken, refreshToken, savedUser);
         savedUser.setAuthenticationResponse(authenticationResponse);
 
         return savedUser;
     }
 
-    public Usuario authenticate(AuthenticationRequest request) {
-    // Tenta autenticar com email e senha
+    // ==============================
+// MÉTODO DE AUTENTICAÇÃO WEB
+// ==============================
+public AuthenticationResponse authenticate(AuthenticationRequest request) {
     try {
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-            )
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
         );
     } catch (Exception e) {
         throw new RuntimeException("Email ou senha incorretos");
     }
 
-    // Busca usuário exato pelo email
     var user = repository.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-    // Verifica se a conta está ativa (apenas para usuários que não são ADMIN)
     if (user.getNivelAcesso() != NivelAcesso.ADMIN && !"ATIVO".equals(user.getCodStatus())) {
         throw new RuntimeException("Conta inativa, procure o administrador");
     }
 
-    // Revoga tokens antigos antes de gerar novos
     revokeAllUserTokens(user);
 
-    // Gera novos tokens
     var jwtToken = jwtService.generateToken(user);
     var refreshToken = jwtService.generateRefreshToken(user);
-
-    // Salva token novo
     saveUserToken(user, jwtToken);
 
-    // Cria e adiciona resposta de autenticação
-    var authResponse = new AuthenticationResponse(jwtToken, refreshToken);
-    user.setAuthenticationResponse(authResponse);
-
-    return user;
+    return new AuthenticationResponse(jwtToken, refreshToken, user);
 }
 
 
-
-
-
-
-
-
-
-public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
-    // Tenta autenticar
+    // ==============================
+    // MÉTODO DE AUTENTICAÇÃO MOBILE
+    // ==============================
+    public AuthenticationResponse authenticate(AuthenticationRequest request, boolean isMobile) {
     try {
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-            )
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
         );
     } catch (Exception e) {
         throw new RuntimeException("Email ou senha incorretos");
@@ -128,12 +119,10 @@ public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
     var user = repository.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-    // 🔹 Bloqueia ADMIN no mobile
     if (isMobile && user.getNivelAcesso() == NivelAcesso.ADMIN) {
         throw new RuntimeException("Usuário ADMIN não pode acessar o app mobile");
     }
 
-    // Apenas usuários não-ADMIN precisam estar ATIVOS
     if (user.getNivelAcesso() != NivelAcesso.ADMIN && !"ATIVO".equals(user.getCodStatus())) {
         throw new RuntimeException("Conta inativa, procure o administrador");
     }
@@ -144,24 +133,13 @@ public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
     var refreshToken = jwtService.generateRefreshToken(user);
     saveUserToken(user, jwtToken);
 
-    var authResponse = new AuthenticationResponse(jwtToken, refreshToken);
-    user.setAuthenticationResponse(authResponse);
-
-    return user;
+    return new AuthenticationResponse(jwtToken, refreshToken, user);
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
+    // ==============================
+    // SALVAR TOKEN DO USUÁRIO
+    // ==============================
     private void saveUserToken(Usuario usuario, String jwtToken) {
         var token = new Token();
         token.setUsuario(usuario);
@@ -172,6 +150,9 @@ public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
         tokenRepository.save(token);
     }
 
+    // ==============================
+    // REVOGAR TOKENS ANTIGOS
+    // ==============================
     private void revokeAllUserTokens(Usuario usuario) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(usuario.getId());
         if (validUserTokens.isEmpty()) return;
@@ -183,6 +164,9 @@ public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
         tokenRepository.saveAll(validUserTokens);
     }
 
+    // ==============================
+    // REFRESH TOKEN
+    // ==============================
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) return;
@@ -196,7 +180,7 @@ public Usuario authenticate(AuthenticationRequest request, boolean isMobile) {
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
-                var authResponse = new AuthenticationResponse(accessToken, refreshToken);
+                var authResponse = new AuthenticationResponse(accessToken, refreshToken, user);
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         }

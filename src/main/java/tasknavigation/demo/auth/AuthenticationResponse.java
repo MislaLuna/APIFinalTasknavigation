@@ -1,25 +1,34 @@
 package tasknavigation.demo.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import tasknavigation.demo.domain.Usuario;
 
 public class AuthenticationResponse {
 
-    @JsonProperty("access_token")
-    private final String accessToken;
+    @JsonProperty("token")
+    private final String token;
 
     @JsonProperty("refresh_token")
     private final String refreshToken;
 
-    public AuthenticationResponse(String accessToken, String refreshToken) {
-        this.accessToken = accessToken;
+    @JsonProperty("usuario")
+    private final Usuario usuario;
+
+    public AuthenticationResponse(String token, String refreshToken, Usuario usuario) {
+        this.token = token;
         this.refreshToken = refreshToken;
+        this.usuario = usuario;
     }
 
-    public String getAccessToken() {
-        return accessToken;
+    public String getToken() {
+        return token;
     }
 
     public String getRefreshToken() {
         return refreshToken;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
     }
 }
